@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
+import { ordersAPI } from '../services/api';
 import { Package, ChevronRight, Truck, CheckCircle, Clock } from 'lucide-react';
 
 const OrdersPage = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    // Load orders from localStorage (mock)
-    const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    setOrders(savedOrders);
+    const fetchOrders = async () => {
+      try {
+        const data = await ordersAPI.getAll();
+        setOrders(data);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
   const formatPrice = (price) => {
@@ -107,7 +117,11 @@ const OrdersPage = () => {
 
             {/* Orders List */}
             <div className="p-4">
-              {filteredOrders.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+                </div>
+              ) : filteredOrders.length === 0 ? (
                 <div className="text-center py-12">
                   <Package size={48} className="mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-500">Você ainda não tem compras</p>

@@ -8,7 +8,8 @@ const RegisterPage = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    location: 'São Paulo, SP'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -62,16 +63,20 @@ const RegisterPage = () => {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
+    try {
+      await register({
         name: formData.name,
         email: formData.email,
-        location: 'São Paulo, SP'
-      };
-      register(userData);
+        password: formData.password,
+        location: formData.location
+      });
       navigate('/');
-    }, 1000);
+    } catch (error) {
+      console.error('Register error:', error);
+      setError(error.response?.data?.detail || 'Erro ao criar conta. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -17,7 +17,6 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    // Mock login validation
     if (!email || !password) {
       setError('Por favor, preencha todos os campos');
       setLoading(false);
@@ -30,18 +29,15 @@ const LoginPage = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock successful login
-      const userData = {
-        id: 1,
-        name: 'Usuário Teste',
-        email: email,
-        location: 'São Paulo, SP'
-      };
-      login(userData);
+    try {
+      await login(email, password);
       navigate('/');
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.detail || 'Email ou senha incorretos');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,7 +62,7 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">E-mail ou telefone</label>
+            <label className="block text-sm text-gray-600 mb-1">E-mail</label>
             <input
               type="text"
               value={email}
@@ -104,15 +100,6 @@ const LoginPage = () => {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="mt-6 text-center space-y-2">
-          <Link to="/" className="text-[#3483FA] text-sm hover:underline block">
-            Não lembro minha senha
-          </Link>
-          <Link to="/" className="text-[#3483FA] text-sm hover:underline block">
-            Criar com e-mail temporário
-          </Link>
-        </div>
 
         <div className="mt-8 pt-6 border-t text-center">
           <p className="text-gray-600 mb-3">Ainda não tem uma conta?</p>

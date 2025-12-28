@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { categories } from '../data/mock';
+import { categoriesAPI } from '../services/api';
 import * as Icons from 'lucide-react';
 
 const CategoryGrid = () => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoriesAPI.getAll();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const getIcon = (iconName) => {
     const Icon = Icons[iconName];
     return Icon ? <Icon size={32} /> : <Icons.Package size={32} />;
   };
+
+  if (categories.length === 0) {
+    return null;
+  }
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
