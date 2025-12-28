@@ -701,6 +701,183 @@ async def health():
     except Exception:
         return {"status": "unhealthy", "database": "disconnected"}
 
+# ==================== HOME API ====================
+
+@api_router.get("/home")
+async def get_home_data():
+    """Get all home page data"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        result = {}
+        
+        # Get active sections ordered
+        cursor.execute("""
+            SELECT id, section_type, title, subtitle, config, sort_order, is_active
+            FROM HomeSections
+            WHERE is_active = 1
+            ORDER BY sort_order
+        """)
+        sections = []
+        for row in cursor.fetchall():
+            sections.append({
+                "id": row[0],
+                "type": row[1],
+                "title": row[2],
+                "subtitle": row[3],
+                "config": json.loads(row[4]) if row[4] else {},
+                "sortOrder": row[5]
+            })
+        result["sections"] = sections
+        
+        # Get active hero slides
+        cursor.execute("""
+            SELECT id, title, subtitle, image_url, link_url, link_text, text_color, overlay_opacity
+            FROM HeroSlides
+            WHERE is_active = 1
+            ORDER BY sort_order
+        """)
+        slides = []
+        for row in cursor.fetchall():
+            slides.append({
+                "id": row[0],
+                "title": row[1],
+                "subtitle": row[2],
+                "imageUrl": row[3],
+                "linkUrl": row[4],
+                "linkText": row[5],
+                "textColor": row[6],
+                "overlayOpacity": row[7]
+            })
+        result["heroSlides"] = slides
+        
+        # Get active promo banners (within date range)
+        cursor.execute("""
+            SELECT id, title, description, image_url, link_url, badge_text, layout_type, background_color
+            FROM PromoBanners
+            WHERE is_active = 1
+            AND (start_date IS NULL OR start_date <= GETDATE())
+            AND (end_date IS NULL OR end_date >= GETDATE())
+            ORDER BY sort_order
+        """)
+        banners = []
+        for row in cursor.fetchall():
+            banners.append({
+                "id": row[0],
+                "title": row[1],
+                "description": row[2],
+                "imageUrl": row[3],
+                "linkUrl": row[4],
+                "badgeText": row[5],
+                "layoutType": row[6],
+                "backgroundColor": row[7]
+            })
+        result["promoBanners"] = banners
+        
+        # Get product carousels with products
+        cursor.execute("""
+            SELECT id, title, subtitle, selection_type, selection_rule, product_ids, max_products
+            FROM ProductCarousels
+            WHERE is_active = 1
+            ORDER BY sort_order
+        """)
+        carousels = []
+        for row in cursor.fetchall():
+            carousel = {
+                "id": row[0],
+                "title": row[1],
+                "subtitle": row[2],
+                "selectionType": row[3],
+                "products": []
+            }
+            
+            max_products = row[6] or 12
+            
+            # Get products based on selection type
+            if row[3] == 'manual' and row[5]:
+                product_ids = json.loads(row[5])
+                if product_ids:
+                    placeholders = ','.join(['%s'] * len(product_ids))
+                    cursor.execute(f"""
+                        SELECT id, title, price, original_price, discount, image, rating, reviews_count, free_shipping, action_type
+                        FROM Products
+                        WHERE id IN ({placeholders})
+                    """, product_ids)
+                    for p in cursor.fetchall():
+                        carousel["products"].append({
+                            "id": p[0], "title": p[1], "price": float(p[2]),
+                            "originalPrice": float(p[3]) if p[3] else None,
+                            "discount": p[4], "image": p[5], "rating": float(p[6]) if p[6] else None,
+                            "reviews": p[7], "freeShipping": bool(p[8]), "actionType": p[9] or 'buy'
+                        })
+            else:
+                # Rule-based selection
+                rule = json.loads(row[4]) if row[4] else {}
+                order_by = rule.get('orderBy', 'id')
+                order_dir = 'DESC' if rule.get('order', 'desc') == 'desc' else 'ASC'
+                
+                query = "SELECT TOP %s id, title, price, original_price, discount, image, rating, reviews_count, free_shipping, action_type FROM Products"
+                params = [max_products]
+                
+                conditions = []
+                if rule.get('minDiscount'):
+                    conditions.append("discount >= %s")
+                    params.append(rule['minDiscount'])
+                if rule.get('categoryId'):
+                    conditions.append("category_id = %s")
+                    params.append(rule['categoryId'])
+                
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
+                
+                # Map orderBy to actual column
+                order_map = {'rating': 'rating', 'sold': 'sold', 'price': 'price', 'discount': 'discount', 'id': 'id'}
+                order_col = order_map.get(order_by, 'id')
+                query += f" ORDER BY {order_col} {order_dir}"
+                
+                cursor.execute(query, params)
+                for p in cursor.fetchall():
+                    carousel["products"].append({
+                        "id": p[0], "title": p[1], "price": float(p[2]),
+                        "originalPrice": float(p[3]) if p[3] else None,
+                        "discount": p[4], "image": p[5], "rating": float(p[6]) if p[6] else None,
+                        "reviews": p[7], "freeShipping": bool(p[8]), "actionType": p[9] or 'buy'
+                    })
+            
+            carousels.append(carousel)
+        result["carousels"] = carousels
+        
+        # Get content blocks
+        cursor.execute("""
+            SELECT id, title, content, layout_type, background_color, text_align
+            FROM ContentBlocks
+            WHERE is_active = 1
+            ORDER BY sort_order
+        """)
+        content_blocks = []
+        for row in cursor.fetchall():
+            content_blocks.append({
+                "id": row[0],
+                "title": row[1],
+                "content": row[2],
+                "layoutType": row[3],
+                "backgroundColor": row[4],
+                "textAlign": row[5]
+            })
+        result["contentBlocks"] = content_blocks
+        
+        # Get home settings
+        cursor.execute("SELECT setting_key, setting_value FROM HomeSettings")
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = row[1]
+        result["settings"] = settings
+        
+        return result
+    finally:
+        cursor.close()
+        conn.close()
+
 # Auth Routes
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user: UserCreate):
