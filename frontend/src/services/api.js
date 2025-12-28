@@ -194,4 +194,12 @@ export const displaySettingsAPI = {
   }
 };
 
+// Home API
+export const homeAPI = {
+  getData: async () => {
+    const response = await api.get('/home');
+    return response.data;
+  }
+};
+
 export default api;
