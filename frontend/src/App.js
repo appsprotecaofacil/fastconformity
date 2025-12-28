@@ -10,6 +10,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import OrdersPage from './pages/OrdersPage';
+import AdminApp from './admin/AdminApp';
 import { authAPI, cartAPI } from './services/api';
 
 // Create Cart Context
