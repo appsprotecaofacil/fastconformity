@@ -43,8 +43,13 @@ const AdminProductForm = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const categoriesData = await adminCategoriesAPI.getAll();
+        const [categoriesData, displaySettingsData] = await Promise.all([
+          adminCategoriesAPI.getAll(),
+          adminDisplaySettingsAPI.getAll()
+        ]);
         setCategories(categoriesData);
+        setGlobalDisplaySettings(displaySettingsData.settings);
+        setDisplayOverrides(displaySettingsData.settings);
 
         if (isEdit) {
           const productData = await adminProductsAPI.getById(id);
@@ -67,8 +72,15 @@ const AdminProductForm = () => {
             seller_location: productData.seller_location || 'São Paulo',
             specs: productData.specs || [],
             action_type: productData.action_type || 'buy',
-            whatsapp_number: productData.whatsapp_number || ''
+            whatsapp_number: productData.whatsapp_number || '',
+            display_overrides: productData.display_overrides || null
           });
+          
+          // Set display overrides state
+          if (productData.display_overrides) {
+            setUseGlobalDisplay(false);
+            setDisplayOverrides(productData.display_overrides);
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
