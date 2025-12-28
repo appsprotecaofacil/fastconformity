@@ -142,6 +142,7 @@ const AdminLayout = () => {
             <Route path="/categories" element={<AdminCategories />} />
             <Route path="/users" element={<AdminUsers />} />
             <Route path="/orders" element={<AdminOrders />} />
+            <Route path="/quotes" element={<AdminQuotes />} />
             <Route path="/reviews" element={<AdminReviews />} />
           </Routes>
         </div>
