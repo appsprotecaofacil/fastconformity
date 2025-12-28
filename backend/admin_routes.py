@@ -347,18 +347,19 @@ async def create_product(product: ProductCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        display_overrides_json = json.dumps(product.display_overrides) if product.display_overrides else None
         cursor.execute("""
             INSERT INTO Products (title, description, price, original_price, discount, installments, 
                 image, images, free_shipping, category_id, condition, brand, stock, 
                 seller_name, seller_reputation, seller_location, specs, action_type, whatsapp_number,
-                rating, reviews_count, sold)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 0, 0)
+                display_overrides, rating, reviews_count, sold)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 0, 0)
         """, (
             product.title, product.description, product.price, product.original_price,
             product.discount, product.installments, product.image, json.dumps(product.images),
             product.free_shipping, product.category_id, product.condition, product.brand,
             product.stock, product.seller_name, product.seller_reputation, product.seller_location,
-            json.dumps(product.specs), product.action_type, product.whatsapp_number
+            json.dumps(product.specs), product.action_type, product.whatsapp_number, display_overrides_json
         ))
         conn.commit()
         cursor.execute("SELECT SCOPE_IDENTITY()")
