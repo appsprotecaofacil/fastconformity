@@ -296,6 +296,8 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/deals" element={<SearchPage deals />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogPostDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
