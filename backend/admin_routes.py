@@ -50,6 +50,7 @@ class ProductCreate(BaseModel):
     specs: Optional[List[dict]] = []
     action_type: Optional[str] = "buy"  # buy, whatsapp, quote
     whatsapp_number: Optional[str] = None
+    display_overrides: Optional[dict] = None
 
 class ProductUpdate(BaseModel):
     title: Optional[str] = None
@@ -71,6 +72,7 @@ class ProductUpdate(BaseModel):
     specs: Optional[List[dict]] = None
     action_type: Optional[str] = None
     whatsapp_number: Optional[str] = None
+    display_overrides: Optional[dict] = None
 
 class CategoryCreate(BaseModel):
     name: str
