@@ -12,6 +12,8 @@ import RegisterPage from './pages/RegisterPage';
 import OrdersPage from './pages/OrdersPage';
 import AdminApp from './admin/AdminApp';
 import DesignShowcase from './pages/DesignShowcase';
+import BlogPage from './pages/BlogPage';
+import BlogPostDetailPage from './pages/BlogPostDetailPage';
 import { authAPI, cartAPI } from './services/api';
 
 // Create Cart Context
