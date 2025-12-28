@@ -297,6 +297,22 @@ def init_database():
             )
         """)
         
+        # Create Quotes table for quote requests
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Quotes' AND xtype='U')
+            CREATE TABLE Quotes (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                product_id INT NOT NULL,
+                customer_name NVARCHAR(100) NOT NULL,
+                customer_email NVARCHAR(100) NOT NULL,
+                customer_phone NVARCHAR(20) NOT NULL,
+                message NVARCHAR(MAX),
+                status NVARCHAR(20) DEFAULT 'pending',
+                created_at DATETIME DEFAULT GETDATE(),
+                FOREIGN KEY (product_id) REFERENCES Products(id)
+            )
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
