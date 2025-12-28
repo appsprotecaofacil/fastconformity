@@ -1046,3 +1046,408 @@ async def delete_quote(quote_id: int):
     finally:
         cursor.close()
         conn.close()
+
+# ==================== BLOG ADMIN ROUTES ====================
+
+# Blog Categories
+@admin_router.get("/blog/categories")
+async def list_blog_categories():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT c.id, c.name, c.slug, c.description,
+                   (SELECT COUNT(*) FROM BlogPosts WHERE category_id = c.id) as post_count
+            FROM BlogCategories c
+            ORDER BY c.name
+        """)
+        return [{
+            "id": r[0],
+            "name": r[1],
+            "slug": r[2],
+            "description": r[3],
+            "postCount": r[4]
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+class BlogCategoryCreate(BaseModel):
+    name: str
+    slug: str
+    description: Optional[str] = None
+
+@admin_router.post("/blog/categories")
+async def create_blog_category(category: BlogCategoryCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO BlogCategories (name, slug, description) VALUES (%s, %s, %s)",
+            (category.name, category.slug, category.description)
+        )
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        return {"message": "Categoria criada com sucesso", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/blog/categories/{category_id}")
+async def update_blog_category(category_id: int, category: BlogCategoryCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE BlogCategories SET name = %s, slug = %s, description = %s WHERE id = %s",
+            (category.name, category.slug, category.description, category_id)
+        )
+        conn.commit()
+        return {"message": "Categoria atualizada com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/blog/categories/{category_id}")
+async def delete_blog_category(category_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Check if category has posts
+        cursor.execute("SELECT COUNT(*) FROM BlogPosts WHERE category_id = %s", (category_id,))
+        if cursor.fetchone()[0] > 0:
+            raise HTTPException(status_code=400, detail="Categoria possui posts associados")
+        
+        cursor.execute("DELETE FROM BlogCategories WHERE id = %s", (category_id,))
+        conn.commit()
+        return {"message": "Categoria excluída com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Blog Posts
+@admin_router.get("/blog/posts")
+async def list_blog_posts(status: Optional[str] = None, search: Optional[str] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT p.id, p.title, p.slug, p.excerpt, p.cover_image, p.status,
+                   p.author_name, p.published_at, p.views_count, p.allow_comments,
+                   c.name as category_name
+            FROM BlogPosts p
+            LEFT JOIN BlogCategories c ON p.category_id = c.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if status:
+            query += " AND p.status = %s"
+            params.append(status)
+        
+        if search:
+            query += " AND (p.title LIKE %s OR p.excerpt LIKE %s)"
+            params.extend([f"%{search}%", f"%{search}%"])
+        
+        query += " ORDER BY p.created_at DESC"
+        
+        cursor.execute(query, params)
+        return [{
+            "id": r[0],
+            "title": r[1],
+            "slug": r[2],
+            "excerpt": r[3],
+            "coverImage": r[4],
+            "status": r[5],
+            "author": r[6],
+            "publishedAt": r[7].isoformat() if r[7] else None,
+            "views": r[8],
+            "allowComments": bool(r[9]),
+            "category": r[10]
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/blog/posts/{post_id}")
+async def get_blog_post_admin(post_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT p.id, p.title, p.slug, p.excerpt, p.content, p.cover_image,
+                   p.category_id, p.author_name, p.status, p.allow_comments,
+                   p.published_at, p.created_at
+            FROM BlogPosts p
+            WHERE p.id = %s
+        """, (post_id,))
+        r = cursor.fetchone()
+        
+        if not r:
+            raise HTTPException(status_code=404, detail="Post não encontrado")
+        
+        # Get related products
+        cursor.execute("""
+            SELECT product_id FROM BlogPostProducts WHERE post_id = %s
+        """, (post_id,))
+        product_ids = [row[0] for row in cursor.fetchall()]
+        
+        return {
+            "id": r[0],
+            "title": r[1],
+            "slug": r[2],
+            "excerpt": r[3],
+            "content": r[4],
+            "coverImage": r[5],
+            "categoryId": r[6],
+            "author": r[7],
+            "status": r[8],
+            "allowComments": bool(r[9]),
+            "publishedAt": r[10].isoformat() if r[10] else None,
+            "createdAt": r[11].isoformat() if r[11] else None,
+            "productIds": product_ids
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+class BlogPostCreate(BaseModel):
+    title: str
+    slug: str
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    cover_image: Optional[str] = None
+    category_id: Optional[int] = None
+    author_name: str
+    status: str = "draft"
+    allow_comments: bool = True
+    product_ids: Optional[List[int]] = []
+
+@admin_router.post("/blog/posts")
+async def create_blog_post(post: BlogPostCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        published_at = "GETDATE()" if post.status == "published" else "NULL"
+        
+        cursor.execute(f"""
+            INSERT INTO BlogPosts (title, slug, excerpt, content, cover_image, category_id, 
+                                   author_name, status, allow_comments, published_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, {published_at if post.status == 'published' else '%s'})
+        """, (
+            post.title, post.slug, post.excerpt, post.content, post.cover_image,
+            post.category_id, post.author_name, post.status, post.allow_comments,
+            *([None] if post.status != 'published' else [])
+        ))
+        
+        if post.status == 'published':
+            cursor.execute("""
+                INSERT INTO BlogPosts (title, slug, excerpt, content, cover_image, category_id, 
+                                       author_name, status, allow_comments, published_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, GETDATE())
+            """, (
+                post.title, post.slug, post.excerpt, post.content, post.cover_image,
+                post.category_id, post.author_name, post.status, post.allow_comments
+            ))
+        else:
+            cursor.execute("""
+                INSERT INTO BlogPosts (title, slug, excerpt, content, cover_image, category_id, 
+                                       author_name, status, allow_comments)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                post.title, post.slug, post.excerpt, post.content, post.cover_image,
+                post.category_id, post.author_name, post.status, post.allow_comments
+            ))
+        
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        
+        # Add related products
+        if post.product_ids:
+            for product_id in post.product_ids:
+                cursor.execute(
+                    "INSERT INTO BlogPostProducts (post_id, product_id) VALUES (%s, %s)",
+                    (new_id, product_id)
+                )
+            conn.commit()
+        
+        return {"message": "Post criado com sucesso", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+class BlogPostUpdate(BaseModel):
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    cover_image: Optional[str] = None
+    category_id: Optional[int] = None
+    author_name: Optional[str] = None
+    status: Optional[str] = None
+    allow_comments: Optional[bool] = None
+    product_ids: Optional[List[int]] = None
+
+@admin_router.put("/blog/posts/{post_id}")
+async def update_blog_post(post_id: int, post: BlogPostUpdate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        updates = []
+        params = []
+        
+        if post.title is not None:
+            updates.append("title = %s")
+            params.append(post.title)
+        if post.slug is not None:
+            updates.append("slug = %s")
+            params.append(post.slug)
+        if post.excerpt is not None:
+            updates.append("excerpt = %s")
+            params.append(post.excerpt)
+        if post.content is not None:
+            updates.append("content = %s")
+            params.append(post.content)
+        if post.cover_image is not None:
+            updates.append("cover_image = %s")
+            params.append(post.cover_image)
+        if post.category_id is not None:
+            updates.append("category_id = %s")
+            params.append(post.category_id)
+        if post.author_name is not None:
+            updates.append("author_name = %s")
+            params.append(post.author_name)
+        if post.status is not None:
+            updates.append("status = %s")
+            params.append(post.status)
+            if post.status == "published":
+                updates.append("published_at = GETDATE()")
+        if post.allow_comments is not None:
+            updates.append("allow_comments = %s")
+            params.append(post.allow_comments)
+        
+        updates.append("updated_at = GETDATE()")
+        
+        if updates:
+            params.append(post_id)
+            query = f"UPDATE BlogPosts SET {', '.join(updates)} WHERE id = %s"
+            cursor.execute(query, params)
+        
+        # Update related products
+        if post.product_ids is not None:
+            cursor.execute("DELETE FROM BlogPostProducts WHERE post_id = %s", (post_id,))
+            for product_id in post.product_ids:
+                cursor.execute(
+                    "INSERT INTO BlogPostProducts (post_id, product_id) VALUES (%s, %s)",
+                    (post_id, product_id)
+                )
+        
+        conn.commit()
+        return {"message": "Post atualizado com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/blog/posts/{post_id}")
+async def delete_blog_post(post_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM BlogPosts WHERE id = %s", (post_id,))
+        conn.commit()
+        return {"message": "Post excluído com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Blog Comments Admin
+@admin_router.get("/blog/comments")
+async def list_blog_comments(status: Optional[str] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT c.id, c.author_name, c.author_email, c.content, c.status, c.created_at,
+                   p.title as post_title, p.slug as post_slug
+            FROM BlogComments c
+            INNER JOIN BlogPosts p ON c.post_id = p.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if status:
+            query += " AND c.status = %s"
+            params.append(status)
+        
+        query += " ORDER BY c.created_at DESC"
+        
+        cursor.execute(query, params)
+        return [{
+            "id": r[0],
+            "author": r[1],
+            "email": r[2],
+            "content": r[3],
+            "status": r[4],
+            "createdAt": r[5].isoformat() if r[5] else None,
+            "postTitle": r[6],
+            "postSlug": r[7]
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/blog/comments/{comment_id}/status")
+async def update_comment_status(comment_id: int, status: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        if status not in ["pending", "approved", "rejected"]:
+            raise HTTPException(status_code=400, detail="Status inválido")
+        
+        cursor.execute("UPDATE BlogComments SET status = %s WHERE id = %s", (status, comment_id))
+        conn.commit()
+        return {"message": "Status atualizado com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/blog/comments/{comment_id}")
+async def delete_blog_comment(comment_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM BlogComments WHERE id = %s", (comment_id,))
+        conn.commit()
+        return {"message": "Comentário excluído com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/blog/stats")
+async def get_blog_stats():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        stats = {}
+        
+        cursor.execute("SELECT COUNT(*) FROM BlogPosts")
+        stats["totalPosts"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM BlogPosts WHERE status = 'published'")
+        stats["publishedPosts"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM BlogPosts WHERE status = 'draft'")
+        stats["draftPosts"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COALESCE(SUM(views_count), 0) FROM BlogPosts")
+        stats["totalViews"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM BlogComments WHERE status = 'pending'")
+        stats["pendingComments"] = cursor.fetchone()[0]
+        
+        return stats
+    finally:
+        cursor.close()
+        conn.close()
