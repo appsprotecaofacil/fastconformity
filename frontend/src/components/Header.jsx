@@ -103,6 +103,14 @@ const Header = ({ cartItemsCount = 0, user, onLogout }) => {
                 )}
               </div>
 
+              {/* Blog Link */}
+              <Link 
+                to="/blog"
+                className="hidden lg:flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
+              >
+                Blog
+              </Link>
+
               {/* Favorites */}
               <Link 
                 to="/favorites" 
