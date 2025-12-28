@@ -122,4 +122,16 @@ export const reviewsAPI = {
   }
 };
 
+// Quotes API
+export const quotesAPI = {
+  create: async (data) => {
+    const response = await api.post('/quotes', data);
+    return response.data;
+  },
+  getMyQuotes: async () => {
+    const response = await api.get('/quotes');
+    return response.data;
+  }
+};
+
 export default api;
