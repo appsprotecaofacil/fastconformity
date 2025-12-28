@@ -1,104 +1,117 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+
+// Paleta de cores FastConformity
+const colors = {
+  primary: '#1E3A5F',
+  accent: '#FF6B35',
+};
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t mt-8">
+    <footer className="mt-8">
       {/* Main Footer */}
-      <div className="max-w-[1200px] mx-auto px-4 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-          {/* Column 1 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Conheça-nos</h4>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link to="/" className="hover:text-[#3483FA]">Sobre o Mercado Livre</Link></li>
-              <li><Link to="/" className="hover:text-[#3483FA]">Investor relations</Link></li>
-              <li><Link to="/" className="hover:text-[#3483FA]">Tendências</Link></li>
-              <li><Link to="/" className="hover:text-[#3483FA]">Sustentabilidade</Link></li>
-            </ul>
-          </div>
-
-          {/* Column 2 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Ganhe dinheiro</h4>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link to="/" className="hover:text-[#3483FA]">Venda no Mercado Livre</Link></li>
-              <li><Link to="/" className="hover:text-[#3483FA]">Mercado Livre Publicidade</Link></li>
-              <li><Link to="/" className="hover:text-[#3483FA]">Soluções para empresas</Link></li>
-            </ul>
-          </div>
-
-          {/* Column 3 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Pague com</h4>
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-gray-100 px-2 py-1 rounded text-xs">Visa</div>
-              <div className="bg-gray-100 px-2 py-1 rounded text-xs">Master</div>
-              <div className="bg-gray-100 px-2 py-1 rounded text-xs">Elo</div>
-              <div className="bg-gray-100 px-2 py-1 rounded text-xs">Pix</div>
-              <div className="bg-gray-100 px-2 py-1 rounded text-xs">Boleto</div>
+      <div style={{ backgroundColor: colors.primary }}>
+        <div className="max-w-[1200px] mx-auto px-4 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+            {/* Logo & Description */}
+            <div className="col-span-2 md:col-span-1 lg:col-span-1">
+              <div className="text-2xl font-bold text-white mb-4">
+                Fast<span style={{ color: colors.accent }}>Conformity</span>
+              </div>
+              <p className="text-white/60 text-sm leading-relaxed mb-4">
+                Sua loja online de confiança. Produtos de qualidade com os melhores preços e entrega rápida.
+              </p>
+              <div className="flex gap-3">
+                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
+                  <Facebook size={18} />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
+                  <Twitter size={18} />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
+                  <Instagram size={18} />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
+                  <Youtube size={18} />
+                </a>
+              </div>
             </div>
-          </div>
 
-          {/* Column 4 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Redes sociais</h4>
-            <div className="flex gap-3">
-              <a href="#" className="text-gray-500 hover:text-[#3483FA]">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#3483FA]">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#3483FA]">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="text-gray-500 hover:text-[#3483FA]">
-                <Youtube size={20} />
-              </a>
+            {/* Institucional */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Institucional</h4>
+              <ul className="space-y-2.5 text-sm text-white/60">
+                <li><Link to="/" className="hover:text-white transition-colors">Sobre nós</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Política de privacidade</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Termos de uso</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Trabalhe conosco</Link></li>
+              </ul>
             </div>
-          </div>
 
-          {/* Column 5 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Minha conta</h4>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li><Link to="/login" className="hover:text-[#3483FA]">Entrar</Link></li>
-              <li><Link to="/register" className="hover:text-[#3483FA]">Criar conta</Link></li>
-              <li><Link to="/orders" className="hover:text-[#3483FA]">Minhas compras</Link></li>
-            </ul>
-          </div>
+            {/* Ajuda */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Ajuda</h4>
+              <ul className="space-y-2.5 text-sm text-white/60">
+                <li><Link to="/" className="hover:text-white transition-colors">Central de ajuda</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Como comprar</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Formas de pagamento</Link></li>
+                <li><Link to="/" className="hover:text-white transition-colors">Trocas e devoluções</Link></li>
+              </ul>
+            </div>
 
-          {/* Column 6 */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-4">Baixe o app</h4>
-            <div className="space-y-2">
-              <a href="#" className="block bg-black text-white text-xs px-3 py-2 rounded text-center hover:bg-gray-800">
-                Google Play
-              </a>
-              <a href="#" className="block bg-black text-white text-xs px-3 py-2 rounded text-center hover:bg-gray-800">
-                App Store
-              </a>
+            {/* Minha Conta */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Minha Conta</h4>
+              <ul className="space-y-2.5 text-sm text-white/60">
+                <li><Link to="/login" className="hover:text-white transition-colors">Entrar</Link></li>
+                <li><Link to="/register" className="hover:text-white transition-colors">Criar conta</Link></li>
+                <li><Link to="/orders" className="hover:text-white transition-colors">Meus pedidos</Link></li>
+                <li><Link to="/favorites" className="hover:text-white transition-colors">Favoritos</Link></li>
+              </ul>
+            </div>
+
+            {/* Contato */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Contato</h4>
+              <ul className="space-y-3 text-sm text-white/60">
+                <li className="flex items-center gap-2">
+                  <Phone size={16} style={{ color: colors.accent }} />
+                  <span>(11) 9999-9999</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail size={16} style={{ color: colors.accent }} />
+                  <span>contato@fastconformity.com</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MapPin size={16} style={{ color: colors.accent }} className="flex-shrink-0 mt-0.5" />
+                  <span>São Paulo - SP, Brasil</span>
+                </li>
+              </ul>
+              
+              {/* Payment Methods */}
+              <h4 className="text-sm font-semibold text-white mt-6 mb-3">Formas de pagamento</h4>
+              <div className="flex flex-wrap gap-2">
+                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Visa</div>
+                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Master</div>
+                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Pix</div>
+                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Boleto</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bottom Footer */}
-      <div className="bg-[#EBEBEB] py-4">
+      <div className="bg-[#152D4A] py-4">
         <div className="max-w-[1200px] mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/50">
+            <p>© 2025 FastConformity. Todos os direitos reservados.</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/" className="hover:text-[#3483FA]">Trabalhe conosco</Link>
-              <Link to="/" className="hover:text-[#3483FA]">Termos e condições</Link>
-              <Link to="/" className="hover:text-[#3483FA]">Como cuidamos da sua privacidade</Link>
-              <Link to="/" className="hover:text-[#3483FA]">Acessibilidade</Link>
-              <Link to="/" className="hover:text-[#3483FA]">Contato</Link>
-            </div>
-            <div className="text-center md:text-right">
-              <p>Copyright © 1999-2025 MercadoLivre.com.br LTDA.</p>
-              <p>CNPJ: 03.007.331/0001-41 / Av. das Nações Unidas, São Paulo - SP</p>
+              <Link to="/" className="hover:text-white/80 transition-colors">Termos</Link>
+              <Link to="/" className="hover:text-white/80 transition-colors">Privacidade</Link>
+              <Link to="/" className="hover:text-white/80 transition-colors">Cookies</Link>
             </div>
           </div>
         </div>
