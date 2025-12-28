@@ -217,7 +217,7 @@ const BlogPostDetailPage = () => {
                     Produtos Relacionados
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {post.products.map(product => (
+                    {post.relatedProducts.map(product => (
                       <Link
                         key={product.id}
                         to={`/product/${product.id}`}
