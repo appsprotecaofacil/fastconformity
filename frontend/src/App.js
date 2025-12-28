@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
+import React, { useState, createContext, useContext, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
@@ -10,6 +10,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import OrdersPage from './pages/OrdersPage';
+import { authAPI, cartAPI } from './services/api';
 
 // Create Cart Context
 export const CartContext = createContext();
@@ -20,125 +21,253 @@ export const AuthContext = createContext();
 export const useCart = () => useContext(CartContext);
 export const useAuth = () => useContext(AuthContext);
 
-// Cart Provider
-const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  const addToCart = (product, quantity = 1) => {
-    setCartItems(prev => {
-      const existingItem = prev.find(item => item.id === product.id);
-      if (existingItem) {
-        return prev.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity }];
-    });
-  };
-
-  const removeFromCart = (productId) => {
-    setCartItems(prev => prev.filter(item => item.id !== productId));
-  };
-
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    setCartItems(prev => 
-      prev.map(item => 
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
-  };
-
-  const cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
-      clearCart,
-      cartTotal,
-      cartItemsCount
-    }}>
-      {children}
-    </CartContext.Provider>
-  );
-};
-
 // Auth Provider
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [loading, setLoading] = useState(true);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+  useEffect(() => {
+    // Verify token on mount
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await authAPI.getMe();
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } catch (error) {
+          // Token invalid, clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+    verifyToken();
+  }, []);
+
+  const login = async (email, password) => {
+    const response = await authAPI.login({ email, password });
+    localStorage.setItem('token', response.access_token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    setUser(response.user);
+    return response.user;
   };
 
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setUser(null);
   };
 
-  const register = (userData) => {
-    // In a real app, this would call an API
-    const newUser = { ...userData, id: Date.now() };
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    return newUser;
+  const register = async (userData) => {
+    const response = await authAPI.register(userData);
+    localStorage.setItem('token', response.access_token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    setUser(response.user);
+    return response.user;
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Cart Provider
+const CartProvider = ({ children }) => {
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState([]);
+  const [cartTotal, setCartTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch cart from API when user is logged in
+  const fetchCart = useCallback(async () => {
+    if (user) {
+      setLoading(true);
+      try {
+        const data = await cartAPI.get();
+        const items = data.items.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          ...item.product
+        }));
+        setCartItems(items);
+        setCartTotal(data.total);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Use localStorage for guests
+      const saved = localStorage.getItem('guestCart');
+      if (saved) {
+        const items = JSON.parse(saved);
+        setCartItems(items);
+        setCartTotal(items.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // Save guest cart to localStorage
+  useEffect(() => {
+    if (!user && cartItems.length >= 0) {
+      localStorage.setItem('guestCart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, user]);
+
+  const addToCart = async (product, quantity = 1) => {
+    if (user) {
+      try {
+        await cartAPI.add(product.id, quantity);
+        await fetchCart();
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
+    } else {
+      // Guest cart
+      setCartItems(prev => {
+        const existingItem = prev.find(item => item.id === product.id);
+        if (existingItem) {
+          return prev.map(item =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        }
+        return [...prev, { ...product, quantity }];
+      });
+    }
+  };
+
+  const removeFromCart = async (cartItemId) => {
+    if (user) {
+      try {
+        await cartAPI.remove(cartItemId);
+        await fetchCart();
+      } catch (error) {
+        console.error('Error removing from cart:', error);
+      }
+    } else {
+      setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+    }
+  };
+
+  const updateQuantity = async (cartItemId, quantity) => {
+    if (quantity <= 0) {
+      await removeFromCart(cartItemId);
+      return;
+    }
+    if (user) {
+      try {
+        await cartAPI.update(cartItemId, quantity);
+        await fetchCart();
+      } catch (error) {
+        console.error('Error updating cart:', error);
+      }
+    } else {
+      setCartItems(prev =>
+        prev.map(item =>
+          item.id === cartItemId ? { ...item, quantity } : item
+        )
+      );
+    }
+  };
+
+  const clearCart = async () => {
+    if (user) {
+      try {
+        await cartAPI.clear();
+        setCartItems([]);
+        setCartTotal(0);
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+      }
+    } else {
+      setCartItems([]);
+      localStorage.removeItem('guestCart');
+    }
+  };
+
+  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  return (
+    <CartContext.Provider value={{
+      cartItems,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      cartTotal,
+      cartItemsCount,
+      loading,
+      fetchCart
+    }}>
+      {children}
+    </CartContext.Provider>
+  );
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProviderWrapper />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+// Separate wrapper to use auth context in cart provider
+function CartProviderWrapper() {
+  return (
+    <CartProvider>
+      <AppContent />
+    </CartProvider>
   );
 }
 
 function AppContent() {
   const { cartItemsCount } = useCart();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#EBEBEB] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#EBEBEB] flex flex-col">
