@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { adminProductsAPI, adminCategoriesAPI } from '../../services/adminApi';
-import { ArrowLeft, Plus, X, Save } from 'lucide-react';
+import { adminProductsAPI, adminCategoriesAPI, adminDisplaySettingsAPI } from '../../services/adminApi';
+import { ArrowLeft, Plus, X, Save, Eye, EyeOff, Settings } from 'lucide-react';
 
 const AdminProductForm = () => {
   const { id } = useParams();
