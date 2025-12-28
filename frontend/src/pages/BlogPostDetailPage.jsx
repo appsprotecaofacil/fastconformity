@@ -319,7 +319,7 @@ const BlogPostDetailPage = () => {
                             <span className="font-medium text-gray-900">{comment.author}</span>
                             <span className="text-xs text-gray-400 flex items-center gap-1">
                               <Clock size={12} />
-                              {formatCommentDate(comment.createdAt)}
+                              {formatCommentDate(comment.date)}
                             </span>
                           </div>
                           <p className="text-gray-600">{comment.content}</p>
