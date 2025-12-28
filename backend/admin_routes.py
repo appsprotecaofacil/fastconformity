@@ -331,8 +331,10 @@ async def get_product(product_id: int):
             "seller_reputation": row[18],
             "seller_location": row[19],
             "specs": json.loads(row[20]) if row[20] else [],
-            "created_at": row[21].isoformat() if row[21] else None,
-            "category_name": row[22]
+            "action_type": row[21] or 'buy',
+            "whatsapp_number": row[22],
+            "created_at": row[23].isoformat() if row[23] else None,
+            "category_name": row[24]
         }
     finally:
         cursor.close()
