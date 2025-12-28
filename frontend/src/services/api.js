@@ -63,6 +63,26 @@ export const productsAPI = {
       params: { search: query, ...filters } 
     });
     return response.data;
+  },
+  trackView: async (productId, sessionId, userId = null) => {
+    const response = await api.post(`/products/${productId}/view`, null, {
+      params: { session_id: sessionId, user_id: userId }
+    });
+    return response.data;
+  },
+  getRelated: async (productId, limit = 8) => {
+    const response = await api.get(`/products/${productId}/related`, { params: { limit } });
+    return response.data;
+  },
+  getSuggestions: async (productId, limit = 6) => {
+    const response = await api.get(`/products/${productId}/suggestions`, { params: { limit } });
+    return response.data;
+  },
+  getAlsoViewed: async (productId, sessionId, limit = 8) => {
+    const response = await api.get(`/products/${productId}/also-viewed`, { 
+      params: { session_id: sessionId, limit } 
+    });
+    return response.data;
   }
 };
 
