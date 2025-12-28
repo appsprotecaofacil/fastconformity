@@ -431,14 +431,20 @@ const AdminProductForm = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="buy">Comprar</option>
-                    <option value="whatsapp">WhatsApp</option>
+                    <option value="buy">🛒 Comprar (adicionar ao carrinho)</option>
+                    <option value="whatsapp">💬 WhatsApp (redirecionar)</option>
+                    <option value="quote">📋 Cotação (formulário)</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.action_type === 'buy' && 'Cliente pode adicionar ao carrinho e comprar normalmente'}
+                    {formData.action_type === 'whatsapp' && 'Cliente será redirecionado para WhatsApp ao clicar'}
+                    {formData.action_type === 'quote' && 'Cliente preenche um formulário para solicitar cotação'}
+                  </p>
                 </div>
                 
                 {formData.action_type === 'whatsapp' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Número do WhatsApp</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Número do WhatsApp *</label>
                     <input
                       type="text"
                       name="whatsapp_number"
@@ -449,6 +455,14 @@ const AdminProductForm = () => {
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Formato: código do país + DDD + número (sem espaços ou símbolos)
+                    </p>
+                  </div>
+                )}
+
+                {formData.action_type !== 'buy' && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-700">
+                      <strong>Atenção:</strong> Produtos com WhatsApp ou Cotação mostrarão "Sob consulta" no lugar do preço.
                     </p>
                   </div>
                 )}
