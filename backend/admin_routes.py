@@ -546,9 +546,15 @@ async def create_category(category: CategoryCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        # Validate parent_id if provided
+        if category.parent_id:
+            cursor.execute("SELECT id FROM Categories WHERE id = %s", (category.parent_id,))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Categoria pai não encontrada")
+        
         cursor.execute(
-            "INSERT INTO Categories (name, slug, icon) VALUES (%s, %s, %s)",
-            (category.name, category.slug, category.icon)
+            "INSERT INTO Categories (name, slug, icon, parent_id) VALUES (%s, %s, %s, %s)",
+            (category.name, category.slug, category.icon, category.parent_id)
         )
         conn.commit()
         cursor.execute("SELECT SCOPE_IDENTITY()")
