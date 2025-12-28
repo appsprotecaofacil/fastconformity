@@ -158,4 +158,68 @@ export const adminQuotesAPI = {
   }
 };
 
+// Blog Categories
+export const adminBlogCategoriesAPI = {
+  getAll: async () => {
+    const response = await adminApi.get('/blog/categories');
+    return response.data;
+  },
+  create: async (data) => {
+    const response = await adminApi.post('/blog/categories', data);
+    return response.data;
+  },
+  update: async (id, data) => {
+    const response = await adminApi.put(`/blog/categories/${id}`, data);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await adminApi.delete(`/blog/categories/${id}`);
+    return response.data;
+  }
+};
+
+// Blog Posts
+export const adminBlogPostsAPI = {
+  getAll: async (params = {}) => {
+    const response = await adminApi.get('/blog/posts', { params });
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await adminApi.get(`/blog/posts/${id}`);
+    return response.data;
+  },
+  create: async (data) => {
+    const response = await adminApi.post('/blog/posts', data);
+    return response.data;
+  },
+  update: async (id, data) => {
+    const response = await adminApi.put(`/blog/posts/${id}`, data);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await adminApi.delete(`/blog/posts/${id}`);
+    return response.data;
+  },
+  getStats: async () => {
+    const response = await adminApi.get('/blog/stats');
+    return response.data;
+  }
+};
+
+// Blog Comments
+export const adminBlogCommentsAPI = {
+  getAll: async (params = {}) => {
+    const response = await adminApi.get('/blog/comments', { params });
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await adminApi.put(`/blog/comments/${id}/status?status=${status}`);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await adminApi.delete(`/blog/comments/${id}`);
+    return response.data;
+  }
+};
+
 export default adminApi;
