@@ -1051,6 +1051,102 @@ async def get_home_data():
         cursor.close()
         conn.close()
 
+# ==================== FOOTER API ====================
+
+@api_router.get("/footer")
+async def get_footer_data():
+    """Get all footer data"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        result = {}
+        
+        # Get footer settings
+        cursor.execute("SELECT setting_key, setting_value FROM FooterSettings")
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = row[1]
+        result["settings"] = settings
+        
+        # Get social links
+        cursor.execute("""
+            SELECT id, platform, url, icon, is_active
+            FROM FooterSocialLinks
+            WHERE is_active = 1
+            ORDER BY sort_order
+        """)
+        social_links = []
+        for row in cursor.fetchall():
+            social_links.append({
+                "id": row[0],
+                "platform": row[1],
+                "url": row[2],
+                "icon": row[3]
+            })
+        result["socialLinks"] = social_links
+        
+        # Get link columns with links
+        cursor.execute("""
+            SELECT id, title FROM FooterLinkColumns
+            WHERE is_active = 1 ORDER BY sort_order
+        """)
+        columns = []
+        for col_row in cursor.fetchall():
+            cursor.execute("""
+                SELECT id, label, url, is_external
+                FROM FooterLinks
+                WHERE column_id = %s AND is_active = 1
+                ORDER BY sort_order
+            """, (col_row[0],))
+            links = []
+            for link_row in cursor.fetchall():
+                links.append({
+                    "id": link_row[0],
+                    "label": link_row[1],
+                    "url": link_row[2],
+                    "isExternal": bool(link_row[3])
+                })
+            columns.append({
+                "id": col_row[0],
+                "title": col_row[1],
+                "links": links
+            })
+        result["linkColumns"] = columns
+        
+        # Get payment methods
+        cursor.execute("""
+            SELECT id, name, icon FROM FooterPaymentMethods
+            WHERE is_active = 1 ORDER BY sort_order
+        """)
+        payment_methods = []
+        for row in cursor.fetchall():
+            payment_methods.append({
+                "id": row[0],
+                "name": row[1],
+                "icon": row[2]
+            })
+        result["paymentMethods"] = payment_methods
+        
+        # Get security badges
+        cursor.execute("""
+            SELECT id, name, image_url, link_url FROM FooterSecurityBadges
+            WHERE is_active = 1 ORDER BY sort_order
+        """)
+        badges = []
+        for row in cursor.fetchall():
+            badges.append({
+                "id": row[0],
+                "name": row[1],
+                "imageUrl": row[2],
+                "linkUrl": row[3]
+            })
+        result["securityBadges"] = badges
+        
+        return result
+    finally:
+        cursor.close()
+        conn.close()
+
 # Auth Routes
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user: UserCreate):
