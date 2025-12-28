@@ -204,25 +204,41 @@ const ProductPage = () => {
 
             {/* Price */}
             <div className="mb-4">
-              {product.originalPrice && (
-                <span className="text-sm text-gray-400 line-through block">
-                  {formatPrice(product.originalPrice)}
-                </span>
-              )}
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl text-gray-800">
-                  {formatPrice(product.price)}
-                </span>
-                {product.discount && (
-                  <span className="text-lg text-[#00A650] font-medium">
-                    {product.discount}% OFF
+              {actionType === 'buy' ? (
+                <>
+                  {product.originalPrice && (
+                    <span className="text-sm text-gray-400 line-through block">
+                      {formatPrice(product.originalPrice)}
+                    </span>
+                  )}
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl" style={{ color: colors.primary }}>
+                      {formatPrice(product.price)}
+                    </span>
+                    {product.discount && (
+                      <span className="text-lg text-[#00A650] font-medium">
+                        {product.discount}% OFF
+                      </span>
+                    )}
+                  </div>
+                  {product.installments && (
+                    <p className="text-lg text-[#00A650] mt-1">
+                      em até <strong>{product.installments}x {formatPrice(product.installmentPrice)}</strong> sem juros
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div>
+                  <span className="text-3xl font-semibold" style={{ color: colors.primary }}>
+                    Sob consulta
                   </span>
-                )}
-              </div>
-              {product.installments && (
-                <p className="text-lg text-[#00A650] mt-1">
-                  em até <strong>{product.installments}x {formatPrice(product.installmentPrice)}</strong> sem juros
-                </p>
+                  <p className="text-gray-500 mt-1">
+                    {actionType === 'whatsapp' 
+                      ? 'Entre em contato pelo WhatsApp para negociar'
+                      : 'Solicite uma cotação personalizada'
+                    }
+                  </p>
+                </div>
               )}
             </div>
 
