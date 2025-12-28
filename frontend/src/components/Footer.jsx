@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { footerAPI } from '../services/api';
+import { Facebook, Instagram, Twitter, Youtube, Linkedin, Music, Mail, Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
 
 // Paleta de cores FastConformity
 const colors = {
@@ -8,111 +9,264 @@ const colors = {
   accent: '#FF6B35',
 };
 
-const Footer = () => {
-  return (
-    <footer className="mt-8">
-      {/* Main Footer */}
-      <div style={{ backgroundColor: colors.primary }}>
-        <div className="max-w-[1200px] mx-auto px-4 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-            {/* Logo & Description */}
-            <div className="col-span-2 md:col-span-1 lg:col-span-1">
-              <div className="text-2xl font-bold text-white mb-4">
-                Fast<span style={{ color: colors.accent }}>Conformity</span>
-              </div>
-              <p className="text-white/60 text-sm leading-relaxed mb-4">
-                Sua loja online de confiança. Produtos de qualidade com os melhores preços e entrega rápida.
-              </p>
-              <div className="flex gap-3">
-                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
-                  <Facebook size={18} />
-                </a>
-                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
-                  <Twitter size={18} />
-                </a>
-                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
-                  <Instagram size={18} />
-                </a>
-                <a href="#" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-colors">
-                  <Youtube size={18} />
-                </a>
-              </div>
-            </div>
+const socialIcons = {
+  Facebook: Facebook,
+  Instagram: Instagram,
+  Twitter: Twitter,
+  YouTube: Youtube,
+  LinkedIn: Linkedin,
+  TikTok: Music,
+};
 
-            {/* Institucional */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-4">Institucional</h4>
-              <ul className="space-y-2.5 text-sm text-white/60">
-                <li><Link to="/" className="hover:text-white transition-colors">Sobre nós</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Política de privacidade</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Termos de uso</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Trabalhe conosco</Link></li>
-              </ul>
-            </div>
-
-            {/* Ajuda */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-4">Ajuda</h4>
-              <ul className="space-y-2.5 text-sm text-white/60">
-                <li><Link to="/" className="hover:text-white transition-colors">Central de ajuda</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Como comprar</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Formas de pagamento</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">Trocas e devoluções</Link></li>
-              </ul>
-            </div>
-
-            {/* Minha Conta */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-4">Minha Conta</h4>
-              <ul className="space-y-2.5 text-sm text-white/60">
-                <li><Link to="/login" className="hover:text-white transition-colors">Entrar</Link></li>
-                <li><Link to="/register" className="hover:text-white transition-colors">Criar conta</Link></li>
-                <li><Link to="/orders" className="hover:text-white transition-colors">Meus pedidos</Link></li>
-                <li><Link to="/favorites" className="hover:text-white transition-colors">Favoritos</Link></li>
-              </ul>
-            </div>
-
-            {/* Contato */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-4">Contato</h4>
-              <ul className="space-y-3 text-sm text-white/60">
-                <li className="flex items-center gap-2">
-                  <Phone size={16} style={{ color: colors.accent }} />
-                  <span>(11) 9999-9999</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail size={16} style={{ color: colors.accent }} />
-                  <span>contato@fastconformity.com</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <MapPin size={16} style={{ color: colors.accent }} className="flex-shrink-0 mt-0.5" />
-                  <span>São Paulo - SP, Brasil</span>
-                </li>
-              </ul>
-              
-              {/* Payment Methods */}
-              <h4 className="text-sm font-semibold text-white mt-6 mb-3">Formas de pagamento</h4>
-              <div className="flex flex-wrap gap-2">
-                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Visa</div>
-                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Master</div>
-                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Pix</div>
-                <div className="bg-white/10 px-3 py-1.5 rounded-lg text-xs text-white/70">Boleto</div>
-              </div>
-            </div>
-          </div>
+// Payment method icons/badges
+const PaymentIcon = ({ name }) => {
+  const icons = {
+    visa: (
+      <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[10px] font-bold text-blue-800">VISA</div>
+    ),
+    mastercard: (
+      <div className="w-10 h-6 bg-white rounded flex items-center justify-center">
+        <div className="flex">
+          <div className="w-3 h-3 bg-red-500 rounded-full -mr-1"></div>
+          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
         </div>
       </div>
+    ),
+    pix: (
+      <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[10px] font-bold text-teal-600">PIX</div>
+    ),
+    boleto: (
+      <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-medium text-gray-700">Boleto</div>
+    ),
+    amex: (
+      <div className="w-10 h-6 bg-blue-600 rounded flex items-center justify-center text-[8px] font-bold text-white">AMEX</div>
+    ),
+    elo: (
+      <div className="w-10 h-6 bg-black rounded flex items-center justify-center text-[10px] font-bold text-yellow-400">ELO</div>
+    ),
+  };
+  return icons[name?.toLowerCase()] || <div className="w-10 h-6 bg-gray-200 rounded"></div>;
+};
 
-      {/* Bottom Footer */}
-      <div className="bg-[#152D4A] py-4">
-        <div className="max-w-[1200px] mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/50">
-            <p>© 2025 FastConformity. Todos os direitos reservados.</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/" className="hover:text-white/80 transition-colors">Termos</Link>
-              <Link to="/" className="hover:text-white/80 transition-colors">Privacidade</Link>
-              <Link to="/" className="hover:text-white/80 transition-colors">Cookies</Link>
+const Footer = () => {
+  const [footerData, setFooterData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFooterData = async () => {
+      try {
+        const data = await footerAPI.getData();
+        setFooterData(data);
+      } catch (error) {
+        console.error('Error fetching footer data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFooterData();
+  }, []);
+
+  // Use default values while loading
+  const settings = footerData?.settings || {};
+  const socialLinks = footerData?.socialLinks || [];
+  const linkColumns = footerData?.linkColumns || [];
+  const paymentMethods = footerData?.paymentMethods || [];
+  const securityBadges = footerData?.securityBadges || [];
+
+  // Process copyright text
+  const copyrightText = (settings.copyright_text || '© {year} FastConformity. Todos os direitos reservados.')
+    .replace('{year}', new Date().getFullYear());
+
+  return (
+    <footer style={{ backgroundColor: colors.primary }} className="text-white">
+      {/* Main Footer Content */}
+      <div className="max-w-[1200px] mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+          
+          {/* Company Info */}
+          <div className="lg:col-span-2">
+            {settings.company_logo ? (
+              <img src={settings.company_logo} alt={settings.company_name} className="h-8 mb-4" />
+            ) : (
+              <h2 className="text-2xl font-bold mb-4">
+                <span className="text-white">{settings.company_name?.split(' ')[0] || 'Fast'}</span>
+                <span style={{ color: colors.accent }}>{settings.company_name?.split(' ').slice(1).join(' ') || 'Conformity'}</span>
+              </h2>
+            )}
+            
+            {settings.company_description && (
+              <p className="text-white/70 text-sm mb-6 max-w-sm">
+                {settings.company_description}
+              </p>
+            )}
+            
+            {/* Contact Info */}
+            <div className="space-y-3">
+              {settings.contact_phone && (
+                <div className="flex items-center gap-3 text-sm text-white/80">
+                  <Phone size={16} />
+                  <span>{settings.contact_phone}</span>
+                </div>
+              )}
+              {settings.contact_email && (
+                <div className="flex items-center gap-3 text-sm text-white/80">
+                  <Mail size={16} />
+                  <a href={`mailto:${settings.contact_email}`} className="hover:text-white transition-colors">
+                    {settings.contact_email}
+                  </a>
+                </div>
+              )}
+              {settings.contact_address && (
+                <div className="flex items-center gap-3 text-sm text-white/80">
+                  <MapPin size={16} />
+                  <span>{settings.contact_address}</span>
+                </div>
+              )}
+              {settings.contact_hours && (
+                <div className="flex items-center gap-3 text-sm text-white/80">
+                  <Clock size={16} />
+                  <span>{settings.contact_hours}</span>
+                </div>
+              )}
             </div>
+
+            {/* Social Links */}
+            {socialLinks.length > 0 && (
+              <div className="flex gap-3 mt-6">
+                {socialLinks.map(link => {
+                  const Icon = socialIcons[link.platform] || Facebook;
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                    >
+                      <Icon size={18} />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Dynamic Link Columns */}
+          {linkColumns.map(column => (
+            <div key={column.id}>
+              <h3 className="font-semibold text-lg mb-4">{column.title}</h3>
+              <ul className="space-y-2">
+                {column.links?.map(link => (
+                  <li key={link.id}>
+                    {link.isExternal ? (
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/70 hover:text-white text-sm transition-colors flex items-center gap-1 group"
+                      >
+                        <ChevronRight size={14} className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.url}
+                        className="text-white/70 hover:text-white text-sm transition-colors flex items-center gap-1 group"
+                      >
+                        <ChevronRight size={14} className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Payment Methods & Security */}
+        {(paymentMethods.length > 0 || securityBadges.length > 0) && (
+          <div className="border-t border-white/10 mt-10 pt-8">
+            <div className="flex flex-wrap justify-between items-center gap-6">
+              {/* Payment Methods */}
+              {settings.payment_methods_enabled !== 'false' && paymentMethods.length > 0 && (
+                <div>
+                  <p className="text-xs text-white/50 mb-3 uppercase tracking-wider">Formas de Pagamento</p>
+                  <div className="flex gap-2">
+                    {paymentMethods.map(method => (
+                      <PaymentIcon key={method.id} name={method.icon} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Security Badges */}
+              {settings.security_badges_enabled !== 'false' && securityBadges.length > 0 && (
+                <div>
+                  <p className="text-xs text-white/50 mb-3 uppercase tracking-wider">Segurança</p>
+                  <div className="flex gap-3">
+                    {securityBadges.map(badge => (
+                      badge.linkUrl ? (
+                        <a key={badge.id} href={badge.linkUrl} target="_blank" rel="noopener noreferrer">
+                          {badge.imageUrl ? (
+                            <img src={badge.imageUrl} alt={badge.name} className="h-10 object-contain" />
+                          ) : (
+                            <div className="px-3 py-1 bg-white/10 rounded text-xs">{badge.name}</div>
+                          )}
+                        </a>
+                      ) : (
+                        <div key={badge.id}>
+                          {badge.imageUrl ? (
+                            <img src={badge.imageUrl} alt={badge.name} className="h-10 object-contain" />
+                          ) : (
+                            <div className="px-3 py-1 bg-white/10 rounded text-xs">{badge.name}</div>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* App Download */}
+              {settings.apps_enabled === 'true' && (settings.app_ios_url || settings.app_android_url) && (
+                <div>
+                  <p className="text-xs text-white/50 mb-3 uppercase tracking-wider">Baixe nosso App</p>
+                  <div className="flex gap-2">
+                    {settings.app_ios_url && (
+                      <a href={settings.app_ios_url} target="_blank" rel="noopener noreferrer" className="block">
+                        <div className="px-3 py-1.5 bg-white/10 rounded-lg text-xs flex items-center gap-2 hover:bg-white/20 transition-colors">
+                          <span>App Store</span>
+                        </div>
+                      </a>
+                    )}
+                    {settings.app_android_url && (
+                      <a href={settings.app_android_url} target="_blank" rel="noopener noreferrer" className="block">
+                        <div className="px-3 py-1.5 bg-white/10 rounded-lg text-xs flex items-center gap-2 hover:bg-white/20 transition-colors">
+                          <span>Google Play</span>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="border-t border-white/10">
+        <div className="max-w-[1200px] mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-white/50 text-sm">
+              {copyrightText}
+            </p>
+            {settings.company_cnpj && (
+              <p className="text-white/40 text-xs">
+                CNPJ: {settings.company_cnpj}
+              </p>
+            )}
           </div>
         </div>
       </div>
