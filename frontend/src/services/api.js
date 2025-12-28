@@ -154,4 +154,32 @@ export const quotesAPI = {
   }
 };
 
+// Blog API
+export const blogAPI = {
+  getCategories: async () => {
+    const response = await api.get('/blog/categories');
+    return response.data;
+  },
+  getPosts: async (params = {}) => {
+    const response = await api.get('/blog/posts', { params });
+    return response.data;
+  },
+  getPost: async (slug) => {
+    const response = await api.get(`/blog/posts/${slug}`);
+    return response.data;
+  },
+  getComments: async (slug) => {
+    const response = await api.get(`/blog/posts/${slug}/comments`);
+    return response.data;
+  },
+  createComment: async (slug, data) => {
+    const response = await api.post(`/blog/posts/${slug}/comments`, data);
+    return response.data;
+  },
+  getRecentPosts: async (limit = 5) => {
+    const response = await api.get('/blog/recent', { params: { limit } });
+    return response.data;
+  }
+};
+
 export default api;
