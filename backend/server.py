@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 import bcrypt
 import json
+from admin_routes import admin_router, init_admin_table
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
