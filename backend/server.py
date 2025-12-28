@@ -515,7 +515,8 @@ async def get_products(
             SELECT p.id, p.title, p.description, p.price, p.original_price, p.discount, 
                    p.installments, p.image, p.images, p.free_shipping, p.rating, 
                    p.reviews_count, p.sold, c.slug as category, p.condition, p.brand, 
-                   p.stock, p.seller_name, p.seller_reputation, p.seller_location, p.specs
+                   p.stock, p.seller_name, p.seller_reputation, p.seller_location, p.specs,
+                   p.action_type, p.whatsapp_number
             FROM Products p
             LEFT JOIN Categories c ON p.category_id = c.id
             WHERE 1=1
