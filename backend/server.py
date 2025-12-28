@@ -131,6 +131,13 @@ class ReviewCreate(BaseModel):
     rating: int = Field(ge=1, le=5)
     comment: str
 
+class QuoteCreate(BaseModel):
+    product_id: int
+    customer_name: str
+    customer_email: str
+    customer_phone: str
+    message: Optional[str] = None
+
 # Auth helpers
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
