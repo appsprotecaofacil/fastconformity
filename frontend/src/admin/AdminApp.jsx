@@ -39,6 +39,7 @@ const AdminLayout = () => {
     { path: '/admin/orders', icon: ShoppingCart, label: 'Pedidos' },
     { path: '/admin/quotes', icon: FileText, label: 'Cotações' },
     { path: '/admin/reviews', icon: Star, label: 'Avaliações' },
+    { path: '/admin/blog', icon: Newspaper, label: 'Blog' },
   ];
 
   const isActive = (path, exact = false) => {
