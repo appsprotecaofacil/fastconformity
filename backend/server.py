@@ -417,6 +417,104 @@ def init_database():
             ALTER TABLE Products ADD display_overrides NVARCHAR(MAX)
         """)
         
+        # Create HomeSections table for managing homepage layout
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='HomeSections' AND xtype='U')
+            CREATE TABLE HomeSections (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                section_type NVARCHAR(50) NOT NULL,
+                title NVARCHAR(200),
+                subtitle NVARCHAR(500),
+                config NVARCHAR(MAX),
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                created_at DATETIME DEFAULT GETDATE(),
+                updated_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create HeroSlides table for banner carousel
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='HeroSlides' AND xtype='U')
+            CREATE TABLE HeroSlides (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(200),
+                subtitle NVARCHAR(500),
+                image_url NVARCHAR(500) NOT NULL,
+                link_url NVARCHAR(500),
+                link_text NVARCHAR(100),
+                text_color NVARCHAR(20) DEFAULT '#FFFFFF',
+                overlay_opacity INT DEFAULT 40,
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                created_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create PromoBanners table for promotional banners
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='PromoBanners' AND xtype='U')
+            CREATE TABLE PromoBanners (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(200),
+                description NVARCHAR(500),
+                image_url NVARCHAR(500) NOT NULL,
+                link_url NVARCHAR(500),
+                badge_text NVARCHAR(50),
+                layout_type NVARCHAR(20) DEFAULT 'full',
+                background_color NVARCHAR(20),
+                start_date DATETIME,
+                end_date DATETIME,
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                created_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create ProductCarousels table for custom product carousels
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductCarousels' AND xtype='U')
+            CREATE TABLE ProductCarousels (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(200) NOT NULL,
+                subtitle NVARCHAR(500),
+                selection_type NVARCHAR(20) DEFAULT 'manual',
+                selection_rule NVARCHAR(MAX),
+                product_ids NVARCHAR(MAX),
+                max_products INT DEFAULT 12,
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                created_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create ContentBlocks table for text/content sections
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ContentBlocks' AND xtype='U')
+            CREATE TABLE ContentBlocks (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(200),
+                content NVARCHAR(MAX),
+                layout_type NVARCHAR(20) DEFAULT 'full',
+                background_color NVARCHAR(20),
+                text_align NVARCHAR(20) DEFAULT 'center',
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                created_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create HomeSettings table for general homepage settings
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='HomeSettings' AND xtype='U')
+            CREATE TABLE HomeSettings (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                setting_key NVARCHAR(50) UNIQUE NOT NULL,
+                setting_value NVARCHAR(MAX),
+                updated_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
