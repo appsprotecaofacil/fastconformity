@@ -1439,3 +1439,103 @@ async def get_blog_stats():
     finally:
         cursor.close()
         conn.close()
+
+
+
+# ==================== DISPLAY SETTINGS ====================
+
+class DisplaySettingUpdate(BaseModel):
+    setting_key: str
+    setting_value: bool
+
+class DisplaySettingsUpdate(BaseModel):
+    settings: List[DisplaySettingUpdate]
+
+@admin_router.get("/display-settings")
+async def get_display_settings():
+    """Get all product display settings"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT setting_key, setting_value, setting_label, setting_group, sort_order
+            FROM ProductDisplaySettings
+            ORDER BY sort_order
+        """)
+        
+        settings = {}
+        groups = {}
+        
+        for row in cursor.fetchall():
+            key, value, label, group, sort_order = row
+            settings[key] = bool(value)
+            
+            if group not in groups:
+                groups[group] = []
+            groups[group].append({
+                "key": key,
+                "value": bool(value),
+                "label": label,
+                "sortOrder": sort_order
+            })
+        
+        return {
+            "settings": settings,
+            "groups": groups
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/display-settings")
+async def update_display_settings(data: DisplaySettingsUpdate):
+    """Update product display settings"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        for setting in data.settings:
+            cursor.execute("""
+                UPDATE ProductDisplaySettings 
+                SET setting_value = %s, updated_at = GETDATE()
+                WHERE setting_key = %s
+            """, (1 if setting.setting_value else 0, setting.setting_key))
+        
+        conn.commit()
+        return {"message": "Configurações atualizadas com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/display-settings/product/{product_id}")
+async def get_product_display_overrides(product_id: int):
+    """Get display overrides for a specific product"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT display_overrides FROM Products WHERE id = %s", (product_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        
+        overrides = json.loads(row[0]) if row[0] else None
+        return {"overrides": overrides, "useGlobal": overrides is None}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/display-settings/product/{product_id}")
+async def update_product_display_overrides(product_id: int, overrides: Optional[dict] = None):
+    """Update display overrides for a specific product"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        overrides_json = json.dumps(overrides) if overrides else None
+        cursor.execute("""
+            UPDATE Products SET display_overrides = %s WHERE id = %s
+        """, (overrides_json, product_id))
+        conn.commit()
+        return {"message": "Configurações do produto atualizadas"}
+    finally:
+        cursor.close()
+        conn.close()
