@@ -242,9 +242,14 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <CartProviderWrapper />
-      </AuthProvider>
+      <Routes>
+        <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/*" element={
+          <AuthProvider>
+            <CartProviderWrapper />
+          </AuthProvider>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }
