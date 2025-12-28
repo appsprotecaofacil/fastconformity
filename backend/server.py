@@ -334,6 +334,69 @@ def init_database():
             )
         """)
         
+        # Create BlogCategories table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogCategories' AND xtype='U')
+            CREATE TABLE BlogCategories (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                name NVARCHAR(100) NOT NULL,
+                slug NVARCHAR(100) UNIQUE NOT NULL,
+                description NVARCHAR(500),
+                created_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create BlogPosts table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogPosts' AND xtype='U')
+            CREATE TABLE BlogPosts (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(255) NOT NULL,
+                slug NVARCHAR(255) UNIQUE NOT NULL,
+                excerpt NVARCHAR(500),
+                content NVARCHAR(MAX),
+                cover_image NVARCHAR(500),
+                category_id INT,
+                author_name NVARCHAR(100),
+                status NVARCHAR(20) DEFAULT 'draft',
+                allow_comments BIT DEFAULT 1,
+                views_count INT DEFAULT 0,
+                published_at DATETIME,
+                created_at DATETIME DEFAULT GETDATE(),
+                updated_at DATETIME DEFAULT GETDATE(),
+                FOREIGN KEY (category_id) REFERENCES BlogCategories(id)
+            )
+        """)
+        
+        # Create BlogPostProducts table (relationship between posts and products)
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogPostProducts' AND xtype='U')
+            CREATE TABLE BlogPostProducts (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                post_id INT NOT NULL,
+                product_id INT NOT NULL,
+                FOREIGN KEY (post_id) REFERENCES BlogPosts(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES Products(id)
+            )
+        """)
+        
+        # Create BlogComments table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BlogComments' AND xtype='U')
+            CREATE TABLE BlogComments (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                post_id INT NOT NULL,
+                user_id INT,
+                author_name NVARCHAR(100) NOT NULL,
+                author_email NVARCHAR(100),
+                content NVARCHAR(MAX) NOT NULL,
+                status NVARCHAR(20) DEFAULT 'pending',
+                created_at DATETIME DEFAULT GETDATE(),
+                FOREIGN KEY (post_id) REFERENCES BlogPosts(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES Users(id)
+            )
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
