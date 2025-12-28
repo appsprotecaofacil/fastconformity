@@ -61,7 +61,9 @@ const AdminProductForm = () => {
             seller_name: productData.seller_name || 'Loja Oficial',
             seller_reputation: productData.seller_reputation || 'MercadoLíder',
             seller_location: productData.seller_location || 'São Paulo',
-            specs: productData.specs || []
+            specs: productData.specs || [],
+            action_type: productData.action_type || 'buy',
+            whatsapp_number: productData.whatsapp_number || ''
           });
         }
       } catch (error) {
