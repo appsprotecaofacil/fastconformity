@@ -360,7 +360,7 @@ async def health():
         conn = get_db_connection()
         conn.close()
         return {"status": "healthy", "database": "connected"}
-    except:
+    except Exception:
         return {"status": "unhealthy", "database": "disconnected"}
 
 # Auth Routes
