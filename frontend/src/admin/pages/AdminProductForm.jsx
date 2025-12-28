@@ -418,6 +418,43 @@ const AdminProductForm = () => {
               </div>
             </div>
 
+            {/* Action Type */}
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Tipo de Ação</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ação do Produto</label>
+                  <select
+                    name="action_type"
+                    value={formData.action_type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="buy">Comprar</option>
+                    <option value="whatsapp">WhatsApp</option>
+                  </select>
+                </div>
+                
+                {formData.action_type === 'whatsapp' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Número do WhatsApp</label>
+                    <input
+                      type="text"
+                      name="whatsapp_number"
+                      value={formData.whatsapp_number}
+                      onChange={handleChange}
+                      placeholder="Ex: 5511999999999"
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formato: código do país + DDD + número (sem espaços ou símbolos)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Seller Info */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Vendedor</h2>
