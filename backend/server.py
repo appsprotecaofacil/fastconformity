@@ -865,6 +865,7 @@ async def create_review(review: ReviewCreate, current_user: dict = Depends(requi
 
 # Include the router in the main app
 app.include_router(api_router)
+app.include_router(admin_router)
 
 app.add_middleware(
     CORSMiddleware,
