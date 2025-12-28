@@ -236,19 +236,19 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
             {product.title}
           </h3>
           
-          {product.rating && (
+          {show('show_rating') && product.rating && (
             <div className="flex items-center gap-2 mb-2">
               <div className="flex items-center gap-1">
                 <Star size={14} className="fill-yellow-400 text-yellow-400" />
                 <span className="text-sm font-medium">{product.rating}</span>
               </div>
-              <span className="text-xs text-gray-400">({product.reviews})</span>
+              {show('show_reviews_count') && <span className="text-xs text-gray-400">({product.reviews})</span>}
             </div>
           )}
           
           {renderPrice()}
           
-          {renderActionButton()}
+          {show('show_action_button') && renderActionButton()}
         </div>
       </Link>
       
