@@ -7,10 +7,21 @@ import {
   Star, Minus, Plus, MapPin, RotateCcw, Award, MessageCircle, FileText
 } from 'lucide-react';
 import QuoteModal from '../components/QuoteModal';
+import ProductCarousel from '../components/ProductCarousel';
 
 const colors = {
   primary: '#1E3A5F',
   accent: '#FF6B35',
+};
+
+// Generate or get session ID for tracking
+const getSessionId = () => {
+  let sessionId = sessionStorage.getItem('fc_session_id');
+  if (!sessionId) {
+    sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    sessionStorage.setItem('fc_session_id', sessionId);
+  }
+  return sessionId;
 };
 
 const ProductPage = () => {
@@ -27,6 +38,11 @@ const ProductPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  
+  // Recommendation states
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [alsoViewed, setAlsoViewed] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +54,22 @@ const ProductPage = () => {
         ]);
         setProduct(productData);
         setReviews(reviewsData);
+        
+        // Track view
+        const sessionId = getSessionId();
+        productsAPI.trackView(id, sessionId, user?.id).catch(() => {});
+        
+        // Fetch recommendations
+        const [related, sugg, viewed] = await Promise.all([
+          productsAPI.getRelated(id, 8).catch(() => []),
+          productsAPI.getSuggestions(id, 6).catch(() => []),
+          productsAPI.getAlsoViewed(id, sessionId, 8).catch(() => [])
+        ]);
+        
+        setRelatedProducts(related);
+        setSuggestions(sugg);
+        setAlsoViewed(viewed);
+        
       } catch (error) {
         console.error('Error fetching product:', error);
       } finally {
@@ -45,7 +77,7 @@ const ProductPage = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, user?.id]);
 
   if (loading) {
     return (
