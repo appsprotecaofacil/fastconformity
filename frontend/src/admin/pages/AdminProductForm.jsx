@@ -146,7 +146,8 @@ const AdminProductForm = () => {
         installments: parseInt(formData.installments) || 12,
         stock: parseInt(formData.stock) || 0,
         category_id: parseInt(formData.category_id),
-        whatsapp_number: formData.whatsapp_number || null
+        whatsapp_number: formData.whatsapp_number || null,
+        display_overrides: useGlobalDisplay ? null : displayOverrides
       };
 
       if (isEdit) {
