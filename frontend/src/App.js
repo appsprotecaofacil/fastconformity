@@ -15,6 +15,7 @@ import DesignShowcase from './pages/DesignShowcase';
 import BlogPage from './pages/BlogPage';
 import BlogPostDetailPage from './pages/BlogPostDetailPage';
 import { authAPI, cartAPI } from './services/api';
+import { DisplaySettingsProvider } from './context/DisplaySettingsContext';
 
 // Create Cart Context
 export const CartContext = createContext();
