@@ -87,6 +87,9 @@ class CategoryUpdate(BaseModel):
 class OrderStatusUpdate(BaseModel):
     status: str
 
+class QuoteStatusUpdate(BaseModel):
+    status: str
+
 class AdminCreate(BaseModel):
     name: str
     email: EmailStr
