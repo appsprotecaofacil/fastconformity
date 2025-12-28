@@ -2,7 +2,7 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, FolderTree, Users, ShoppingCart,
-  Star, Settings, LogOut, Menu, X, ChevronDown
+  Star, Settings, LogOut, Menu, X, ChevronDown, FileText
 } from 'lucide-react';
 
 // Admin Context
@@ -17,6 +17,7 @@ import AdminCategories from './pages/AdminCategories';
 import AdminUsers from './pages/AdminUsers';
 import AdminOrders from './pages/AdminOrders';
 import AdminReviews from './pages/AdminReviews';
+import AdminQuotes from './pages/AdminQuotes';
 import AdminLogin from './pages/AdminLogin';
 
 const AdminLayout = () => {
