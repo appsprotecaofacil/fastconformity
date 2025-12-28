@@ -625,6 +625,27 @@ async def get_categories():
         cursor.close()
         conn.close()
 
+# Display Settings Public Route
+@api_router.get("/display-settings")
+async def get_public_display_settings():
+    """Get global product display settings for frontend"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT setting_key, setting_value
+            FROM ProductDisplaySettings
+        """)
+        
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = bool(row[1])
+        
+        return settings
+    finally:
+        cursor.close()
+        conn.close()
+
 # Products Routes
 @api_router.get("/products")
 async def get_products(
