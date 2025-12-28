@@ -397,6 +397,26 @@ def init_database():
             )
         """)
         
+        # Create ProductDisplaySettings table for global display settings
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductDisplaySettings' AND xtype='U')
+            CREATE TABLE ProductDisplaySettings (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                setting_key NVARCHAR(50) UNIQUE NOT NULL,
+                setting_value BIT DEFAULT 1,
+                setting_label NVARCHAR(100),
+                setting_group NVARCHAR(50),
+                sort_order INT DEFAULT 0,
+                updated_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Add display_overrides column to Products if it doesn't exist
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Products') AND name = 'display_overrides')
+            ALTER TABLE Products ADD display_overrides NVARCHAR(MAX)
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
