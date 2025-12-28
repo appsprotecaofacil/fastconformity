@@ -1229,18 +1229,6 @@ async def create_blog_post(post: BlogPostCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        published_at = "GETDATE()" if post.status == "published" else "NULL"
-        
-        cursor.execute(f"""
-            INSERT INTO BlogPosts (title, slug, excerpt, content, cover_image, category_id, 
-                                   author_name, status, allow_comments, published_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, {published_at if post.status == 'published' else '%s'})
-        """, (
-            post.title, post.slug, post.excerpt, post.content, post.cover_image,
-            post.category_id, post.author_name, post.status, post.allow_comments,
-            *([None] if post.status != 'published' else [])
-        ))
-        
         if post.status == 'published':
             cursor.execute("""
                 INSERT INTO BlogPosts (title, slug, excerpt, content, cover_image, category_id, 
