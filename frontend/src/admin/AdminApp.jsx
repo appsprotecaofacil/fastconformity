@@ -149,6 +149,11 @@ const AdminLayout = () => {
             <Route path="/orders" element={<AdminOrders />} />
             <Route path="/quotes" element={<AdminQuotes />} />
             <Route path="/reviews" element={<AdminReviews />} />
+            <Route path="/blog" element={<AdminBlogPosts />} />
+            <Route path="/blog/new" element={<AdminBlogPostForm />} />
+            <Route path="/blog/:id/edit" element={<AdminBlogPostForm />} />
+            <Route path="/blog/categories" element={<AdminBlogCategories />} />
+            <Route path="/blog/comments" element={<AdminBlogComments />} />
           </Routes>
         </div>
       </main>
