@@ -56,6 +56,14 @@ export const adminCategoriesAPI = {
     const response = await adminApi.get('/categories');
     return response.data;
   },
+  getTree: async () => {
+    const response = await adminApi.get('/categories/tree');
+    return response.data;
+  },
+  getParents: async () => {
+    const response = await adminApi.get('/categories/parents');
+    return response.data;
+  },
   create: async (data) => {
     const response = await adminApi.post('/categories', data);
     return response.data;
