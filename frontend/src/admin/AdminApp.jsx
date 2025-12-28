@@ -33,6 +33,7 @@ const AdminLayout = () => {
     { path: '/admin/categories', icon: FolderTree, label: 'Categorias' },
     { path: '/admin/users', icon: Users, label: 'Usuários' },
     { path: '/admin/orders', icon: ShoppingCart, label: 'Pedidos' },
+    { path: '/admin/quotes', icon: FileText, label: 'Cotações' },
     { path: '/admin/reviews', icon: Star, label: 'Avaliações' },
   ];
 
