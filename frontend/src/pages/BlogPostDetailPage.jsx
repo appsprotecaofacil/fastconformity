@@ -168,7 +168,7 @@ const BlogPostDetailPage = () => {
                   className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4"
                   style={{ backgroundColor: colors.accent }}
                 >
-                  {post.category}
+                  {typeof post.category === 'object' ? post.category.name : post.category}
                 </span>
               )}
 
