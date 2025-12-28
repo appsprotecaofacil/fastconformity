@@ -739,7 +739,7 @@ async def get_product(product_id: int):
                    p.installments, p.image, p.images, p.free_shipping, p.rating, 
                    p.reviews_count, p.sold, c.slug as category, p.condition, p.brand, 
                    p.stock, p.seller_name, p.seller_reputation, p.seller_location, p.specs,
-                   p.action_type, p.whatsapp_number
+                   p.action_type, p.whatsapp_number, p.display_overrides
             FROM Products p
             LEFT JOIN Categories c ON p.category_id = c.id
             WHERE p.id = %s
@@ -753,6 +753,7 @@ async def get_product(product_id: int):
         images = json.loads(r[8]) if r[8] else [r[7]]
         specs = json.loads(r[20]) if r[20] else []
         action_type = r[21] if r[21] else 'buy'
+        display_overrides = json.loads(r[23]) if r[23] else None
         
         return {
             "id": r[0],
@@ -780,7 +781,8 @@ async def get_product(product_id: int):
             },
             "specs": specs,
             "actionType": action_type,
-            "whatsappNumber": r[22]
+            "whatsappNumber": r[22],
+            "displayOverrides": display_overrides
         }
     finally:
         cursor.close()
