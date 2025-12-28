@@ -455,18 +455,87 @@ async def list_categories():
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            SELECT c.id, c.name, c.slug, c.icon, COUNT(p.id) as product_count
+            SELECT c.id, c.name, c.slug, c.icon, c.parent_id, 
+                   COUNT(p.id) as product_count,
+                   pc.name as parent_name
             FROM Categories c
             LEFT JOIN Products p ON c.id = p.category_id
-            GROUP BY c.id, c.name, c.slug, c.icon
-            ORDER BY c.name
+            LEFT JOIN Categories pc ON c.parent_id = pc.id
+            GROUP BY c.id, c.name, c.slug, c.icon, c.parent_id, pc.name
+            ORDER BY COALESCE(c.parent_id, c.id), c.parent_id, c.name
         """)
         return [{
             "id": row[0],
             "name": row[1],
             "slug": row[2],
             "icon": row[3],
-            "product_count": row[4]
+            "parent_id": row[4],
+            "product_count": row[5],
+            "parent_name": row[6]
+        } for row in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/categories/tree")
+async def get_categories_tree():
+    """Returns categories organized in a hierarchical tree structure"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT c.id, c.name, c.slug, c.icon, c.parent_id, 
+                   COUNT(p.id) as product_count
+            FROM Categories c
+            LEFT JOIN Products p ON c.id = p.category_id
+            GROUP BY c.id, c.name, c.slug, c.icon, c.parent_id
+            ORDER BY c.name
+        """)
+        
+        all_categories = [{
+            "id": row[0],
+            "name": row[1],
+            "slug": row[2],
+            "icon": row[3],
+            "parent_id": row[4],
+            "product_count": row[5],
+            "children": []
+        } for row in cursor.fetchall()]
+        
+        # Build tree structure
+        categories_dict = {cat["id"]: cat for cat in all_categories}
+        root_categories = []
+        
+        for cat in all_categories:
+            if cat["parent_id"] is None:
+                root_categories.append(cat)
+            else:
+                parent = categories_dict.get(cat["parent_id"])
+                if parent:
+                    parent["children"].append(cat)
+        
+        return root_categories
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/categories/parents")
+async def get_parent_categories():
+    """Returns only root categories (for parent selection dropdown)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, name, slug, icon
+            FROM Categories
+            WHERE parent_id IS NULL
+            ORDER BY name
+        """)
+        return [{
+            "id": row[0],
+            "name": row[1],
+            "slug": row[2],
+            "icon": row[3]
         } for row in cursor.fetchall()]
     finally:
         cursor.close()
