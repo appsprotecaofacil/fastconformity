@@ -2,7 +2,7 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, FolderTree, Users, ShoppingCart,
-  Star, Settings, LogOut, Menu, X, ChevronDown, FileText, Newspaper, Eye, Home
+  Star, Settings, LogOut, Menu, X, ChevronDown, FileText, Newspaper, Eye, Home, Footprints
 } from 'lucide-react';
 
 // Admin Context
@@ -24,6 +24,7 @@ import AdminBlogCategories from './pages/AdminBlogCategories';
 import AdminBlogComments from './pages/AdminBlogComments';
 import AdminDisplaySettings from './pages/AdminDisplaySettings';
 import AdminHome from './pages/AdminHome';
+import AdminFooter from './pages/AdminFooter';
 import AdminLogin from './pages/AdminLogin';
 
 const AdminLayout = () => {
@@ -36,6 +37,7 @@ const AdminLayout = () => {
   const menuItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/home', icon: Home, label: 'Home' },
+    { path: '/admin/footer', icon: Footprints, label: 'Rodapé' },
     { path: '/admin/products', icon: Package, label: 'Produtos' },
     { path: '/admin/categories', icon: FolderTree, label: 'Categorias' },
     { path: '/admin/users', icon: Users, label: 'Usuários' },
