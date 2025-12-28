@@ -612,6 +612,72 @@ def seed_data():
                 """, setting)
             conn.commit()
             logger.info("Display settings seeded successfully")
+        
+        # Seed home sections if empty
+        cursor.execute("SELECT COUNT(*) FROM HomeSections")
+        if cursor.fetchone()[0] == 0:
+            home_sections = [
+                ('hero', 'Banner Principal', None, '{}', 1, 1),
+                ('benefits', 'Benefícios', None, '{"items":[{"icon":"Truck","title":"Entrega Rápida","subtitle":"Em até 24h"},{"icon":"ShieldCheck","title":"Compra Segura","subtitle":"100% protegida"},{"icon":"CreditCard","title":"Parcele em 12x","subtitle":"Sem juros"}]}', 2, 1),
+                ('categories', 'Categorias em Destaque', 'Navegue por categorias', '{"maxItems":8}', 3, 1),
+                ('carousel', 'Produtos em Destaque', 'Confira nossa seleção especial', '{"carouselId":1}', 4, 1),
+                ('promo_banners', 'Promoções', None, '{"layout":"grid-2"}', 5, 1),
+                ('carousel', 'Mais Vendidos', 'Os produtos mais procurados', '{"carouselId":2}', 6, 1),
+                ('newsletter', 'Newsletter', 'Receba ofertas exclusivas', '{"buttonText":"Inscrever-se","placeholder":"Digite seu e-mail"}', 7, 1),
+            ]
+            for section in home_sections:
+                cursor.execute("""
+                    INSERT INTO HomeSections (section_type, title, subtitle, config, sort_order, is_active)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, section)
+            conn.commit()
+            logger.info("Home sections seeded successfully")
+        
+        # Seed hero slides if empty
+        cursor.execute("SELECT COUNT(*) FROM HeroSlides")
+        if cursor.fetchone()[0] == 0:
+            hero_slides = [
+                ('Ofertas Imperdíveis', 'Até 50% de desconto em eletrônicos', 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&h=500&fit=crop', '/search?deals=true', 'Ver Ofertas', '#FFFFFF', 40, 1, 1),
+                ('Novos Lançamentos', 'Tecnologia de última geração', 'https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=1400&h=500&fit=crop', '/search?category=tecnologia', 'Explorar', '#FFFFFF', 40, 2, 1),
+                ('Frete Grátis', 'Em milhares de produtos', 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1400&h=500&fit=crop', '/search', 'Comprar Agora', '#FFFFFF', 40, 3, 1),
+            ]
+            for slide in hero_slides:
+                cursor.execute("""
+                    INSERT INTO HeroSlides (title, subtitle, image_url, link_url, link_text, text_color, overlay_opacity, sort_order, is_active)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, slide)
+            conn.commit()
+            logger.info("Hero slides seeded successfully")
+        
+        # Seed product carousels if empty
+        cursor.execute("SELECT COUNT(*) FROM ProductCarousels")
+        if cursor.fetchone()[0] == 0:
+            carousels = [
+                ('Produtos em Destaque', 'Nossa seleção especial para você', 'rule', '{"orderBy":"rating","order":"desc"}', None, 12, 1, 1),
+                ('Mais Vendidos', 'Os favoritos dos nossos clientes', 'rule', '{"orderBy":"sold","order":"desc"}', None, 12, 2, 1),
+                ('Ofertas do Dia', 'Descontos imperdíveis', 'rule', '{"minDiscount":15}', None, 8, 3, 1),
+            ]
+            for carousel in carousels:
+                cursor.execute("""
+                    INSERT INTO ProductCarousels (title, subtitle, selection_type, selection_rule, product_ids, max_products, sort_order, is_active)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, carousel)
+            conn.commit()
+            logger.info("Product carousels seeded successfully")
+        
+        # Seed home settings if empty
+        cursor.execute("SELECT COUNT(*) FROM HomeSettings")
+        if cursor.fetchone()[0] == 0:
+            home_settings = [
+                ('newsletter_enabled', 'true'),
+                ('newsletter_title', 'Fique por dentro das novidades'),
+                ('newsletter_subtitle', 'Cadastre-se e receba ofertas exclusivas'),
+                ('benefits_enabled', 'true'),
+            ]
+            for setting in home_settings:
+                cursor.execute("INSERT INTO HomeSettings (setting_key, setting_value) VALUES (%s, %s)", setting)
+            conn.commit()
+            logger.info("Home settings seeded successfully")
             
             
     except Exception as e:
