@@ -173,7 +173,11 @@ export const blogAPI = {
     return response.data;
   },
   createComment: async (slug, data) => {
-    const response = await api.post(`/blog/posts/${slug}/comments`, data);
+    const response = await api.post(`/blog/posts/${slug}/comments`, {
+      author_name: data.author,
+      author_email: data.email,
+      content: data.content
+    });
     return response.data;
   },
   getRecentPosts: async (limit = 5) => {
