@@ -1,6 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { banners } from '../data/mock';
+
+const banners = [
+  {
+    id: 1,
+    title: 'Ofertas do Dia',
+    subtitle: 'Até 60% OFF em milhares de produtos',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&h=400&fit=crop',
+    bgColor: '#FFE600'
+  },
+  {
+    id: 2,
+    title: 'Tecnologia',
+    subtitle: 'Os melhores smartphones com até 12x sem juros',
+    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200&h=400&fit=crop',
+    bgColor: '#3483FA'
+  },
+  {
+    id: 3,
+    title: 'Frete Grátis',
+    subtitle: 'Em milhares de produtos para todo Brasil',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&h=400&fit=crop',
+    bgColor: '#00A650'
+  }
+];
 
 const Banner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
