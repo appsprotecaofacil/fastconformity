@@ -880,6 +880,7 @@ async def startup_event():
     logger.info("Initializing database...")
     init_database()
     seed_data()
+    init_admin_table()
     logger.info("Server started successfully")
 
 @app.on_event("shutdown")
