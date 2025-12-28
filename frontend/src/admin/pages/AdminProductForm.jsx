@@ -30,10 +30,14 @@ const AdminProductForm = () => {
     seller_location: 'São Paulo',
     specs: [],
     action_type: 'buy',
-    whatsapp_number: ''
+    whatsapp_number: '',
+    display_overrides: null
   });
   const [newSpec, setNewSpec] = useState({ label: '', value: '' });
   const [newImage, setNewImage] = useState('');
+  const [globalDisplaySettings, setGlobalDisplaySettings] = useState({});
+  const [useGlobalDisplay, setUseGlobalDisplay] = useState(true);
+  const [displayOverrides, setDisplayOverrides] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
