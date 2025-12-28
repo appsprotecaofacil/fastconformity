@@ -4,8 +4,14 @@ import { productsAPI, reviewsAPI } from '../services/api';
 import { useCart, useAuth } from '../App';
 import { 
   ChevronLeft, ChevronRight, Heart, Share2, Truck, ShieldCheck, 
-  Star, Minus, Plus, MapPin, RotateCcw, Award
+  Star, Minus, Plus, MapPin, RotateCcw, Award, MessageCircle, FileText
 } from 'lucide-react';
+import QuoteModal from '../components/QuoteModal';
+
+const colors = {
+  primary: '#1E3A5F',
+  accent: '#FF6B35',
+};
 
 const ProductPage = () => {
   const { id } = useParams();
