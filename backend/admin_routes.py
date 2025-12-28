@@ -1976,3 +1976,337 @@ async def update_home_settings(settings: dict):
     finally:
         cursor.close()
         conn.close()
+
+
+# ==================== FOOTER MANAGEMENT ====================
+
+class FooterLinkColumnCreate(BaseModel):
+    title: str
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+class FooterLinkCreate(BaseModel):
+    column_id: int
+    label: str
+    url: str
+    is_external: Optional[bool] = False
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+class FooterSocialLinkCreate(BaseModel):
+    platform: str
+    url: Optional[str] = ''
+    icon: Optional[str] = ''
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+class FooterPaymentMethodCreate(BaseModel):
+    name: str
+    icon: Optional[str] = ''
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+class FooterSecurityBadgeCreate(BaseModel):
+    name: str
+    image_url: Optional[str] = ''
+    link_url: Optional[str] = ''
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+# Footer Settings
+@admin_router.get("/footer/settings")
+async def get_footer_settings():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT setting_key, setting_value FROM FooterSettings")
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = row[1]
+        return settings
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/settings")
+async def update_footer_settings(settings: dict):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        for key, value in settings.items():
+            cursor.execute("""
+                IF EXISTS (SELECT 1 FROM FooterSettings WHERE setting_key = %s)
+                    UPDATE FooterSettings SET setting_value = %s, updated_at = GETDATE() WHERE setting_key = %s
+                ELSE
+                    INSERT INTO FooterSettings (setting_key, setting_value) VALUES (%s, %s)
+            """, (key, str(value) if value else '', key, key, str(value) if value else ''))
+        conn.commit()
+        return {"message": "Configurações atualizadas"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Social Links
+@admin_router.get("/footer/social-links")
+async def get_footer_social_links():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, platform, url, icon, sort_order, is_active
+            FROM FooterSocialLinks ORDER BY sort_order
+        """)
+        links = []
+        for row in cursor.fetchall():
+            links.append({
+                "id": row[0], "platform": row[1], "url": row[2], "icon": row[3],
+                "sortOrder": row[4], "isActive": bool(row[5])
+            })
+        return links
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/footer/social-links")
+async def create_footer_social_link(data: FooterSocialLinkCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO FooterSocialLinks (platform, url, icon, sort_order, is_active)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (data.platform, data.url, data.icon, data.sort_order, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        return {"message": "Link criado", "id": cursor.fetchone()[0]}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/social-links/{link_id}")
+async def update_footer_social_link(link_id: int, data: FooterSocialLinkCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE FooterSocialLinks SET platform=%s, url=%s, icon=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.platform, data.url, data.icon, data.sort_order, 1 if data.is_active else 0, link_id))
+        conn.commit()
+        return {"message": "Link atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/footer/social-links/{link_id}")
+async def delete_footer_social_link(link_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM FooterSocialLinks WHERE id = %s", (link_id,))
+        conn.commit()
+        return {"message": "Link removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Link Columns
+@admin_router.get("/footer/columns")
+async def get_footer_columns():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, title, sort_order, is_active FROM FooterLinkColumns ORDER BY sort_order")
+        columns = []
+        for col_row in cursor.fetchall():
+            cursor.execute("""
+                SELECT id, label, url, is_external, sort_order, is_active
+                FROM FooterLinks WHERE column_id = %s ORDER BY sort_order
+            """, (col_row[0],))
+            links = []
+            for link_row in cursor.fetchall():
+                links.append({
+                    "id": link_row[0], "label": link_row[1], "url": link_row[2],
+                    "isExternal": bool(link_row[3]), "sortOrder": link_row[4], "isActive": bool(link_row[5])
+                })
+            columns.append({
+                "id": col_row[0], "title": col_row[1], "sortOrder": col_row[2],
+                "isActive": bool(col_row[3]), "links": links
+            })
+        return columns
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/footer/columns")
+async def create_footer_column(data: FooterLinkColumnCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO FooterLinkColumns (title, sort_order, is_active) VALUES (%s, %s, %s)
+        """, (data.title, data.sort_order, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        return {"message": "Coluna criada", "id": cursor.fetchone()[0]}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/columns/{column_id}")
+async def update_footer_column(column_id: int, data: FooterLinkColumnCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE FooterLinkColumns SET title=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.title, data.sort_order, 1 if data.is_active else 0, column_id))
+        conn.commit()
+        return {"message": "Coluna atualizada"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/footer/columns/{column_id}")
+async def delete_footer_column(column_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM FooterLinkColumns WHERE id = %s", (column_id,))
+        conn.commit()
+        return {"message": "Coluna removida"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Footer Links
+@admin_router.post("/footer/links")
+async def create_footer_link(data: FooterLinkCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO FooterLinks (column_id, label, url, is_external, sort_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (data.column_id, data.label, data.url, 1 if data.is_external else 0, data.sort_order, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        return {"message": "Link criado", "id": cursor.fetchone()[0]}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/links/{link_id}")
+async def update_footer_link(link_id: int, data: FooterLinkCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE FooterLinks SET column_id=%s, label=%s, url=%s, is_external=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.column_id, data.label, data.url, 1 if data.is_external else 0, data.sort_order, 1 if data.is_active else 0, link_id))
+        conn.commit()
+        return {"message": "Link atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/footer/links/{link_id}")
+async def delete_footer_link(link_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM FooterLinks WHERE id = %s", (link_id,))
+        conn.commit()
+        return {"message": "Link removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Payment Methods
+@admin_router.get("/footer/payment-methods")
+async def get_footer_payment_methods():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, name, icon, sort_order, is_active FROM FooterPaymentMethods ORDER BY sort_order")
+        methods = []
+        for row in cursor.fetchall():
+            methods.append({
+                "id": row[0], "name": row[1], "icon": row[2], "sortOrder": row[3], "isActive": bool(row[4])
+            })
+        return methods
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/payment-methods/{method_id}")
+async def update_footer_payment_method(method_id: int, data: FooterPaymentMethodCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE FooterPaymentMethods SET name=%s, icon=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.name, data.icon, data.sort_order, 1 if data.is_active else 0, method_id))
+        conn.commit()
+        return {"message": "Método atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Security Badges
+@admin_router.get("/footer/security-badges")
+async def get_footer_security_badges():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, name, image_url, link_url, sort_order, is_active FROM FooterSecurityBadges ORDER BY sort_order")
+        badges = []
+        for row in cursor.fetchall():
+            badges.append({
+                "id": row[0], "name": row[1], "imageUrl": row[2], "linkUrl": row[3], "sortOrder": row[4], "isActive": bool(row[5])
+            })
+        return badges
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/footer/security-badges")
+async def create_footer_security_badge(data: FooterSecurityBadgeCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO FooterSecurityBadges (name, image_url, link_url, sort_order, is_active)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (data.name, data.image_url, data.link_url, data.sort_order, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        return {"message": "Selo criado", "id": cursor.fetchone()[0]}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/footer/security-badges/{badge_id}")
+async def update_footer_security_badge(badge_id: int, data: FooterSecurityBadgeCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE FooterSecurityBadges SET name=%s, image_url=%s, link_url=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.name, data.image_url, data.link_url, data.sort_order, 1 if data.is_active else 0, badge_id))
+        conn.commit()
+        return {"message": "Selo atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/footer/security-badges/{badge_id}")
+async def delete_footer_security_badge(badge_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM FooterSecurityBadges WHERE id = %s", (badge_id,))
+        conn.commit()
+        return {"message": "Selo removido"}
+    finally:
+        cursor.close()
+        conn.close()
