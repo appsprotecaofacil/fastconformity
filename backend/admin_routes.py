@@ -48,6 +48,8 @@ class ProductCreate(BaseModel):
     seller_reputation: Optional[str] = "MercadoLíder"
     seller_location: Optional[str] = "São Paulo"
     specs: Optional[List[dict]] = []
+    action_type: Optional[str] = "buy"  # buy, whatsapp, quote
+    whatsapp_number: Optional[str] = None
 
 class ProductUpdate(BaseModel):
     title: Optional[str] = None
@@ -67,6 +69,8 @@ class ProductUpdate(BaseModel):
     seller_reputation: Optional[str] = None
     seller_location: Optional[str] = None
     specs: Optional[List[dict]] = None
+    action_type: Optional[str] = None
+    whatsapp_number: Optional[str] = None
 
 class CategoryCreate(BaseModel):
     name: str
