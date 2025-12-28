@@ -263,7 +263,9 @@ function App() {
 function CartProviderWrapper() {
   return (
     <CartProvider>
-      <AppContent />
+      <DisplaySettingsProvider>
+        <AppContent />
+      </DisplaySettingsProvider>
     </CartProvider>
   );
 }
