@@ -320,6 +320,20 @@ def init_database():
             )
         """)
         
+        # Create ProductViews table for tracking views (for "who viewed also viewed")
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductViews' AND xtype='U')
+            CREATE TABLE ProductViews (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                product_id INT NOT NULL,
+                session_id NVARCHAR(100) NOT NULL,
+                user_id INT NULL,
+                viewed_at DATETIME DEFAULT GETDATE(),
+                FOREIGN KEY (product_id) REFERENCES Products(id),
+                FOREIGN KEY (user_id) REFERENCES Users(id)
+            )
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
