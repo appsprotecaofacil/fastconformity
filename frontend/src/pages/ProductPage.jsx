@@ -317,20 +317,48 @@ const ProductPage = () => {
 
               {/* Action Buttons */}
               <div className="space-y-2">
-                <button 
-                  onClick={handleBuyNow}
-                  disabled={addingToCart}
-                  className="w-full bg-[#3483FA] text-white py-3 rounded font-medium hover:bg-[#2968c8] transition-colors disabled:opacity-50"
-                >
-                  {addingToCart ? 'Processando...' : 'Comprar agora'}
-                </button>
-                <button 
-                  onClick={handleAddToCart}
-                  disabled={addingToCart}
-                  className="w-full bg-[#E8F4FD] text-[#3483FA] py-3 rounded font-medium hover:bg-[#d4ebfc] transition-colors disabled:opacity-50"
-                >
-                  Adicionar ao carrinho
-                </button>
+                {actionType === 'buy' && (
+                  <>
+                    <button 
+                      onClick={handleBuyNow}
+                      disabled={addingToCart}
+                      className="w-full text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50 hover:opacity-90"
+                      style={{ backgroundColor: colors.accent }}
+                    >
+                      {addingToCart ? 'Processando...' : 'Comprar agora'}
+                    </button>
+                    <button 
+                      onClick={handleAddToCart}
+                      disabled={addingToCart}
+                      className="w-full py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
+                    >
+                      Adicionar ao carrinho
+                    </button>
+                  </>
+                )}
+                
+                {actionType === 'whatsapp' && (
+                  <button 
+                    onClick={handleWhatsAppClick}
+                    className="w-full py-3 rounded-xl font-medium transition-colors hover:opacity-90 flex items-center justify-center gap-2 text-white"
+                    style={{ backgroundColor: '#25D366' }}
+                  >
+                    <MessageCircle size={20} />
+                    Falar no WhatsApp
+                  </button>
+                )}
+                
+                {actionType === 'quote' && (
+                  <button 
+                    onClick={handleQuoteClick}
+                    className="w-full py-3 rounded-xl font-medium transition-colors hover:opacity-90 flex items-center justify-center gap-2 text-white"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    <FileText size={20} />
+                    Solicitar Cotação
+                  </button>
+                )}
               </div>
 
               {/* Extra Actions */}
