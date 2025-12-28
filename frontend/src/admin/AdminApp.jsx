@@ -2,7 +2,7 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, FolderTree, Users, ShoppingCart,
-  Star, Settings, LogOut, Menu, X, ChevronDown, FileText, Newspaper
+  Star, Settings, LogOut, Menu, X, ChevronDown, FileText, Newspaper, Eye
 } from 'lucide-react';
 
 // Admin Context
@@ -22,6 +22,7 @@ import AdminBlogPosts from './pages/AdminBlogPosts';
 import AdminBlogPostForm from './pages/AdminBlogPostForm';
 import AdminBlogCategories from './pages/AdminBlogCategories';
 import AdminBlogComments from './pages/AdminBlogComments';
+import AdminDisplaySettings from './pages/AdminDisplaySettings';
 import AdminLogin from './pages/AdminLogin';
 
 const AdminLayout = () => {
@@ -40,6 +41,7 @@ const AdminLayout = () => {
     { path: '/admin/quotes', icon: FileText, label: 'Cotações' },
     { path: '/admin/reviews', icon: Star, label: 'Avaliações' },
     { path: '/admin/blog', icon: Newspaper, label: 'Blog' },
+    { path: '/admin/display-settings', icon: Eye, label: 'Exibição' },
   ];
 
   const isActive = (path, exact = false) => {
