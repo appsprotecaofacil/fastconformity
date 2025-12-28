@@ -608,7 +608,8 @@ async def get_product(product_id: int):
             SELECT p.id, p.title, p.description, p.price, p.original_price, p.discount, 
                    p.installments, p.image, p.images, p.free_shipping, p.rating, 
                    p.reviews_count, p.sold, c.slug as category, p.condition, p.brand, 
-                   p.stock, p.seller_name, p.seller_reputation, p.seller_location, p.specs
+                   p.stock, p.seller_name, p.seller_reputation, p.seller_location, p.specs,
+                   p.action_type, p.whatsapp_number
             FROM Products p
             LEFT JOIN Categories c ON p.category_id = c.id
             WHERE p.id = %s
@@ -621,6 +622,7 @@ async def get_product(product_id: int):
         installment_price = r[3] / r[6] if r[6] else None
         images = json.loads(r[8]) if r[8] else [r[7]]
         specs = json.loads(r[20]) if r[20] else []
+        action_type = r[21] if r[21] else 'buy'
         
         return {
             "id": r[0],
@@ -646,7 +648,9 @@ async def get_product(product_id: int):
                 "reputation": r[18],
                 "location": r[19]
             },
-            "specs": specs
+            "specs": specs,
+            "actionType": action_type,
+            "whatsappNumber": r[22]
         }
     finally:
         cursor.close()
