@@ -527,6 +527,139 @@ const AdminProductForm = () => {
               </div>
             </div>
 
+            {/* Display Settings Override */}
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Settings size={20} className="text-gray-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Visibilidade dos Campos</h2>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Toggle Global/Custom */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">Usar configuração global</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useGlobalDisplay}
+                      onChange={(e) => {
+                        setUseGlobalDisplay(e.target.checked);
+                        if (e.target.checked) {
+                          setDisplayOverrides(globalDisplaySettings);
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {!useGlobalDisplay && (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-xs text-gray-500 mb-3">
+                      Personalize quais campos serão exibidos neste produto específico.
+                    </p>
+                    
+                    {/* Price Settings */}
+                    <div className="border-b pb-2 mb-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase">Preço</span>
+                    </div>
+                    {[
+                      { key: 'show_price', label: 'Preço' },
+                      { key: 'show_original_price', label: 'Preço original' },
+                      { key: 'show_discount', label: 'Desconto' },
+                      { key: 'show_installments', label: 'Parcelamento' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between py-1">
+                        <span className="text-sm text-gray-700 flex items-center gap-2">
+                          {displayOverrides[key] ? <Eye size={14} className="text-green-500" /> : <EyeOff size={14} className="text-gray-400" />}
+                          {label}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={displayOverrides[key] ?? true}
+                          onChange={(e) => setDisplayOverrides({ ...displayOverrides, [key]: e.target.checked })}
+                          className="rounded"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Delivery Settings */}
+                    <div className="border-b pb-2 mb-2 mt-4">
+                      <span className="text-xs font-medium text-gray-500 uppercase">Entrega</span>
+                    </div>
+                    {[
+                      { key: 'show_free_shipping', label: 'Frete grátis' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between py-1">
+                        <span className="text-sm text-gray-700 flex items-center gap-2">
+                          {displayOverrides[key] ? <Eye size={14} className="text-green-500" /> : <EyeOff size={14} className="text-gray-400" />}
+                          {label}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={displayOverrides[key] ?? true}
+                          onChange={(e) => setDisplayOverrides({ ...displayOverrides, [key]: e.target.checked })}
+                          className="rounded"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Product Info Settings */}
+                    <div className="border-b pb-2 mb-2 mt-4">
+                      <span className="text-xs font-medium text-gray-500 uppercase">Informações</span>
+                    </div>
+                    {[
+                      { key: 'show_specs', label: 'Especificações' },
+                      { key: 'show_brand', label: 'Marca' },
+                      { key: 'show_condition', label: 'Condição' },
+                      { key: 'show_stock', label: 'Estoque' },
+                      { key: 'show_sold', label: 'Vendidos' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between py-1">
+                        <span className="text-sm text-gray-700 flex items-center gap-2">
+                          {displayOverrides[key] ? <Eye size={14} className="text-green-500" /> : <EyeOff size={14} className="text-gray-400" />}
+                          {label}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={displayOverrides[key] ?? true}
+                          onChange={(e) => setDisplayOverrides({ ...displayOverrides, [key]: e.target.checked })}
+                          className="rounded"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Interaction Settings */}
+                    <div className="border-b pb-2 mb-2 mt-4">
+                      <span className="text-xs font-medium text-gray-500 uppercase">Interação</span>
+                    </div>
+                    {[
+                      { key: 'show_rating', label: 'Avaliações' },
+                      { key: 'show_reviews_count', label: 'Qtd. Reviews' },
+                      { key: 'show_action_button', label: 'Botão de ação' },
+                      { key: 'show_seller_info', label: 'Info vendedor' },
+                    ].map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between py-1">
+                        <span className="text-sm text-gray-700 flex items-center gap-2">
+                          {displayOverrides[key] ? <Eye size={14} className="text-green-500" /> : <EyeOff size={14} className="text-gray-400" />}
+                          {label}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={displayOverrides[key] ?? true}
+                          onChange={(e) => setDisplayOverrides({ ...displayOverrides, [key]: e.target.checked })}
+                          className="rounded"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
