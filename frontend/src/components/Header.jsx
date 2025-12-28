@@ -197,7 +197,14 @@ const Header = ({ cartItemsCount = 0, user, onLogout }) => {
       {showMobileMenu && (
         <div className="lg:hidden fixed inset-0 top-[80px] bg-white z-50 overflow-y-auto">
           <div className="p-4">
-            <h3 className="font-semibold text-gray-800 mb-3">Categorias</h3>
+            <Link 
+              to="/blog"
+              className="block py-3 text-gray-900 font-semibold border-b border-gray-100 hover:text-[#FF6B35] transition-colors"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              📰 Blog
+            </Link>
+            <h3 className="font-semibold text-gray-800 mb-3 mt-4">Categorias</h3>
             {categories.map(cat => (
               <Link 
                 key={cat.id}
