@@ -148,6 +148,7 @@ const AdminLayout = () => {
           <Routes>
             <Route path="/" element={<AdminDashboard />} />
             <Route path="/home" element={<AdminHome />} />
+            <Route path="/footer" element={<AdminFooter />} />
             <Route path="/products" element={<AdminProducts />} />
             <Route path="/products/new" element={<AdminProductForm />} />
             <Route path="/products/:id/edit" element={<AdminProductForm />} />
