@@ -186,4 +186,12 @@ export const blogAPI = {
   }
 };
 
+// Display Settings API
+export const displaySettingsAPI = {
+  get: async () => {
+    const response = await api.get('/display-settings');
+    return response.data;
+  }
+};
+
 export default api;
