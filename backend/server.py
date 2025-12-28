@@ -224,9 +224,21 @@ def init_database():
                 seller_reputation NVARCHAR(50),
                 seller_location NVARCHAR(100),
                 specs NVARCHAR(MAX),
+                action_type NVARCHAR(20) DEFAULT 'buy',
+                whatsapp_number NVARCHAR(20),
                 created_at DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (category_id) REFERENCES Categories(id)
             )
+        """)
+        
+        # Add action_type and whatsapp_number columns if they don't exist
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Products') AND name = 'action_type')
+            ALTER TABLE Products ADD action_type NVARCHAR(20) DEFAULT 'buy'
+        """)
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Products') AND name = 'whatsapp_number')
+            ALTER TABLE Products ADD whatsapp_number NVARCHAR(20)
         """)
         
         # Create Cart table
