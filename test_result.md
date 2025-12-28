@@ -1,99 +1,40 @@
-# Blog Feature Testing Results
+# Test Results - Display Settings Feature
 
-## Test Summary
-Date: 2025-12-28
-Tester: Testing Agent
-Status: ✅ PASSED (with minor fixes applied)
+## Current Testing Focus
+Testing the new Product Display Settings feature:
+1. Admin page for global display settings (/admin/display-settings)
+2. Product form with visibility override section
+3. API endpoints for display settings
 
-## Tests Executed
+## Test Scenarios
 
-### ✅ Test 1: Public Blog Page
-- **URL**: https://fastshop-blog.preview.emergentagent.com/blog
-- **Status**: PASSED
-- **Results**:
-  - Blog listing page loads correctly
-  - "Teste Blog Post" is visible
-  - Category filtering works
-  - Search functionality present
-  - Responsive design implemented
+### Admin Display Settings Page
+- Login to admin panel at /admin
+- Navigate to "Exibição" in sidebar
+- Verify all display settings are shown in groups (Price, Delivery, Product Info, Interaction, Seller)
+- Test toggling settings on/off
+- Test "Mostrar todos" and "Ocultar todos" buttons
+- Test saving settings
 
-### ✅ Test 2: Blog Post Detail
-- **URL**: https://fastshop-blog.preview.emergentagent.com/blog/teste-blog-post-novo
-- **Status**: PASSED (after fixing React rendering issue)
-- **Results**:
-  - Post detail page loads correctly
-  - Post content displays properly
-  - Comment form is visible and functional
-  - Category displays correctly (fixed object rendering issue)
-  - Meta information (author, date, views) displays correctly
+### Product Form Visibility Override
+- Navigate to edit an existing product (/admin/products/1/edit)
+- Scroll to "Visibilidade dos Campos" section
+- Test "Usar configuração global" toggle
+- When disabled, verify individual field toggles appear
+- Test saving product with custom visibility settings
 
-### ✅ Test 3: Admin Blog Management
-- **URL**: https://fastshop-blog.preview.emergentagent.com/admin/blog
-- **Status**: PASSED
-- **Results**:
-  - Admin login successful with credentials: admin@mercadolivre.com / admin123
-  - Blog section accessible in admin sidebar
-  - Test post "Teste Blog Post" visible in admin management
-  - Blog statistics showing: 1 total post, 1 published, 12 views
-  - Admin interface includes Categories and Comments management
+### API Endpoints
+- GET /api/display-settings - Public global settings
+- GET /api/admin/display-settings - Admin grouped settings
+- PUT /api/admin/display-settings - Update global settings
+- GET /api/admin/display-settings/product/{id} - Product overrides
+- PUT /api/admin/display-settings/product/{id} - Update product overrides
 
-### ✅ Test 4: Blog Link in Header
-- **URL**: https://fastshop-blog.preview.emergentagent.com
-- **Status**: PASSED
-- **Results**:
-  - Blog link present in main navigation header
-  - Link correctly navigates to /blog
-  - Link visible on both desktop and mobile views
+## Credentials
+- Admin Login: admin@mercadolivre.com / admin123
 
-## Issues Found and Fixed
-
-### 🔧 Critical Issue Fixed: React Rendering Error
-- **Problem**: Category object was being rendered directly instead of category.name
-- **Error**: "Objects are not valid as a React child (found: object with keys {id, name, slug})"
-- **Files Fixed**: 
-  - `/app/frontend/src/pages/BlogPostDetailPage.jsx` (line 171)
-  - `/app/frontend/src/pages/BlogPage.jsx` (lines 178, 239)
-- **Solution**: Added type checking to render `post.category.name` when category is an object
-- **Status**: ✅ RESOLVED
-
-## API Endpoints Tested
-All blog API endpoints are working correctly:
-- ✅ GET /api/blog/posts - Returns blog posts with pagination
-- ✅ GET /api/blog/posts/{slug} - Returns single post details
-- ✅ GET /api/blog/categories - Returns blog categories
-- ✅ GET /api/blog/posts/{slug}/comments - Returns post comments
-- ✅ POST /api/blog/posts/{slug}/comments - Comment submission (form present)
-
-## Feature Completeness
-
-### Public Features ✅
-- [x] Blog listing page with search and filtering
-- [x] Blog post detail pages
-- [x] Comment forms (ready for submission)
-- [x] Category filtering
-- [x] Responsive design
-- [x] Navigation integration
-
-### Admin Features ✅
-- [x] Admin authentication
-- [x] Blog post management interface
-- [x] Blog statistics dashboard
-- [x] Category management access
-- [x] Comment management access
-
-## Performance Notes
-- Page load times are acceptable
-- Images load properly from Unsplash
-- No console errors after fixes
-- Responsive design works on desktop (tested at 1920x1080)
-
-## Recommendations
-1. ✅ **FIXED**: Category rendering issue resolved
-2. Comment submission functionality is present but not tested end-to-end (form validation works)
-3. Admin blog management is fully functional
-4. All core blog features are working as expected
-
-## Overall Assessment
-**Status: ✅ BLOG FEATURE FULLY FUNCTIONAL**
-
-The blog feature implementation is complete and working correctly. The critical React rendering issue has been resolved, and all major functionality including public blog pages, post details, admin management, and navigation integration are working properly.
+## Notes
+- Global settings apply to all products by default
+- Products can override global settings individually
+- When "Usar configuração global" is ON, product uses global settings
+- When OFF, product uses custom settings defined in the form
