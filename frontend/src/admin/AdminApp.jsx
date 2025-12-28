@@ -156,6 +156,7 @@ const AdminLayout = () => {
             <Route path="/blog/:id/edit" element={<AdminBlogPostForm />} />
             <Route path="/blog/categories" element={<AdminBlogCategories />} />
             <Route path="/blog/comments" element={<AdminBlogComments />} />
+            <Route path="/display-settings" element={<AdminDisplaySettings />} />
           </Routes>
         </div>
       </main>
