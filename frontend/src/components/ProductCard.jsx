@@ -201,7 +201,7 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
             alt={product.title}
             className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
           />
-          {product.actionType === 'buy' && product.freeShipping && (
+          {show('show_free_shipping') && product.actionType === 'buy' && product.freeShipping && (
             <span 
               className="absolute top-3 left-3 px-3 py-1 text-xs font-medium text-white rounded-full"
               style={{ backgroundColor: colors.accent }}
@@ -209,7 +209,7 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
               Frete Grátis
             </span>
           )}
-          {product.actionType === 'buy' && product.discount && !product.freeShipping && (
+          {show('show_discount') && product.actionType === 'buy' && product.discount && !product.freeShipping && (
             <span 
               className="absolute top-3 left-3 px-3 py-1 text-xs font-medium text-white rounded-full bg-green-500"
             >
