@@ -72,11 +72,13 @@ class CategoryCreate(BaseModel):
     name: str
     slug: str
     icon: Optional[str] = "Package"
+    parent_id: Optional[int] = None
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     icon: Optional[str] = None
+    parent_id: Optional[int] = None
 
 class OrderStatusUpdate(BaseModel):
     status: str
