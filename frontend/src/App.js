@@ -278,7 +278,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EBEBEB] flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header cartItemsCount={cartItemsCount} user={user} onLogout={logout} />
       <main className="flex-1">
         <Routes>
