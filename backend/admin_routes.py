@@ -256,7 +256,8 @@ async def list_products(search: Optional[str] = None, category_id: Optional[int]
     cursor = conn.cursor()
     try:
         query = """
-            SELECT p.id, p.title, p.price, p.stock, p.sold, p.image, c.name as category, p.created_at
+            SELECT p.id, p.title, p.price, p.stock, p.sold, p.image, c.name as category, 
+                   p.created_at, p.action_type, p.whatsapp_number
             FROM Products p
             LEFT JOIN Categories c ON p.category_id = c.id
             WHERE 1=1
@@ -282,7 +283,9 @@ async def list_products(search: Optional[str] = None, category_id: Optional[int]
             "sold": row[4],
             "image": row[5],
             "category": row[6],
-            "created_at": row[7].isoformat() if row[7] else None
+            "created_at": row[7].isoformat() if row[7] else None,
+            "action_type": row[8] or 'buy',
+            "whatsapp_number": row[9]
         } for row in cursor.fetchall()]
         
         return products
