@@ -210,7 +210,7 @@ const BlogPostDetailPage = () => {
               />
 
               {/* Related Products */}
-              {post.products && post.products.length > 0 && (
+              {post.relatedProducts && post.relatedProducts.length > 0 && (
                 <div className="mt-12 pt-8 border-t">
                   <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
                     <ShoppingBag size={22} style={{ color: colors.accent }} />
