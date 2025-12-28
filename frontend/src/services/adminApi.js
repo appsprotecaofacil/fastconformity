@@ -138,4 +138,24 @@ export const adminAdminsAPI = {
   }
 };
 
+// Quotes
+export const adminQuotesAPI = {
+  getAll: async (params = {}) => {
+    const response = await adminApi.get('/quotes', { params });
+    return response.data;
+  },
+  getStats: async () => {
+    const response = await adminApi.get('/quotes/stats');
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await adminApi.put(`/quotes/${id}/status`, { status });
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await adminApi.delete(`/quotes/${id}`);
+    return response.data;
+  }
+};
+
 export default adminApi;
