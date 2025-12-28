@@ -28,7 +28,9 @@ const AdminProductForm = () => {
     seller_name: 'Loja Oficial',
     seller_reputation: 'MercadoLíder',
     seller_location: 'São Paulo',
-    specs: []
+    specs: [],
+    action_type: 'buy',
+    whatsapp_number: ''
   });
   const [newSpec, setNewSpec] = useState({ label: '', value: '' });
   const [newImage, setNewImage] = useState('');
