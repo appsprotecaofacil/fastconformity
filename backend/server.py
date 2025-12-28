@@ -1250,6 +1250,241 @@ async def get_also_viewed_products(product_id: int, session_id: str, limit: int 
         cursor.close()
         conn.close()
 
+# ==================== BLOG PUBLIC ROUTES ====================
+
+@api_router.get("/blog/categories")
+async def get_blog_categories():
+    """Get all blog categories"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT c.id, c.name, c.slug, c.description, 
+                   (SELECT COUNT(*) FROM BlogPosts WHERE category_id = c.id AND status = 'published') as post_count
+            FROM BlogCategories c
+            ORDER BY c.name
+        """)
+        return [{
+            "id": r[0],
+            "name": r[1],
+            "slug": r[2],
+            "description": r[3],
+            "postCount": r[4]
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/blog/posts")
+async def get_blog_posts(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 10
+):
+    """Get published blog posts with pagination"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        offset = (page - 1) * limit
+        
+        # Base query
+        query = """
+            SELECT p.id, p.title, p.slug, p.excerpt, p.cover_image, 
+                   p.author_name, p.published_at, p.views_count,
+                   c.name as category_name, c.slug as category_slug
+            FROM BlogPosts p
+            LEFT JOIN BlogCategories c ON p.category_id = c.id
+            WHERE p.status = 'published'
+        """
+        count_query = "SELECT COUNT(*) FROM BlogPosts p WHERE p.status = 'published'"
+        params = []
+        count_params = []
+        
+        if category:
+            query += " AND c.slug = %s"
+            count_query += " AND p.category_id = (SELECT id FROM BlogCategories WHERE slug = %s)"
+            params.append(category)
+            count_params.append(category)
+        
+        if search:
+            query += " AND (p.title LIKE %s OR p.excerpt LIKE %s)"
+            count_query += " AND (p.title LIKE %s OR p.excerpt LIKE %s)"
+            params.extend([f"%{search}%", f"%{search}%"])
+            count_params.extend([f"%{search}%", f"%{search}%"])
+        
+        query += " ORDER BY p.published_at DESC OFFSET %s ROWS FETCH NEXT %s ROWS ONLY"
+        params.extend([offset, limit])
+        
+        cursor.execute(query, params)
+        posts = [{
+            "id": r[0],
+            "title": r[1],
+            "slug": r[2],
+            "excerpt": r[3],
+            "coverImage": r[4],
+            "author": r[5],
+            "publishedAt": r[6].isoformat() if r[6] else None,
+            "views": r[7],
+            "category": r[8],
+            "categorySlug": r[9]
+        } for r in cursor.fetchall()]
+        
+        # Get total count
+        cursor.execute(count_query, count_params)
+        total = cursor.fetchone()[0]
+        
+        return {
+            "posts": posts,
+            "total": total,
+            "page": page,
+            "pages": (total + limit - 1) // limit
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/blog/posts/{slug}")
+async def get_blog_post(slug: str):
+    """Get a single blog post by slug"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT p.id, p.title, p.slug, p.excerpt, p.content, p.cover_image, 
+                   p.author_name, p.published_at, p.views_count, p.allow_comments,
+                   c.id as category_id, c.name as category_name, c.slug as category_slug
+            FROM BlogPosts p
+            LEFT JOIN BlogCategories c ON p.category_id = c.id
+            WHERE p.slug = %s AND p.status = 'published'
+        """, (slug,))
+        r = cursor.fetchone()
+        
+        if not r:
+            raise HTTPException(status_code=404, detail="Post não encontrado")
+        
+        # Increment views
+        cursor.execute("UPDATE BlogPosts SET views_count = views_count + 1 WHERE slug = %s", (slug,))
+        conn.commit()
+        
+        # Get related products
+        cursor.execute("""
+            SELECT p.id, p.title, p.price, p.image, p.action_type, p.whatsapp_number
+            FROM Products p
+            INNER JOIN BlogPostProducts bp ON p.id = bp.product_id
+            WHERE bp.post_id = %s
+        """, (r[0],))
+        products = [{
+            "id": pr[0],
+            "title": pr[1],
+            "price": float(pr[2]),
+            "image": pr[3],
+            "actionType": pr[4] or 'buy',
+            "whatsappNumber": pr[5]
+        } for pr in cursor.fetchall()]
+        
+        return {
+            "id": r[0],
+            "title": r[1],
+            "slug": r[2],
+            "excerpt": r[3],
+            "content": r[4],
+            "coverImage": r[5],
+            "author": r[6],
+            "publishedAt": r[7].isoformat() if r[7] else None,
+            "views": r[8] + 1,
+            "allowComments": bool(r[9]),
+            "category": {
+                "id": r[10],
+                "name": r[11],
+                "slug": r[12]
+            } if r[10] else None,
+            "relatedProducts": products
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/blog/posts/{slug}/comments")
+async def get_post_comments(slug: str):
+    """Get approved comments for a post"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT c.id, c.author_name, c.content, c.created_at
+            FROM BlogComments c
+            INNER JOIN BlogPosts p ON c.post_id = p.id
+            WHERE p.slug = %s AND c.status = 'approved'
+            ORDER BY c.created_at DESC
+        """, (slug,))
+        return [{
+            "id": r[0],
+            "author": r[1],
+            "content": r[2],
+            "date": r[3].isoformat() if r[3] else None
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+class BlogCommentCreate(BaseModel):
+    author_name: str
+    author_email: Optional[str] = None
+    content: str
+
+@api_router.post("/blog/posts/{slug}/comments")
+async def create_comment(slug: str, comment: BlogCommentCreate):
+    """Create a new comment on a post"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get post id and check if comments allowed
+        cursor.execute("""
+            SELECT id, allow_comments FROM BlogPosts WHERE slug = %s AND status = 'published'
+        """, (slug,))
+        post = cursor.fetchone()
+        
+        if not post:
+            raise HTTPException(status_code=404, detail="Post não encontrado")
+        
+        if not post[1]:
+            raise HTTPException(status_code=400, detail="Comentários não permitidos neste post")
+        
+        cursor.execute("""
+            INSERT INTO BlogComments (post_id, author_name, author_email, content, status)
+            VALUES (%s, %s, %s, %s, 'pending')
+        """, (post[0], comment.author_name, comment.author_email, comment.content))
+        conn.commit()
+        
+        return {"message": "Comentário enviado e aguardando aprovação"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/blog/recent")
+async def get_recent_posts(limit: int = 5):
+    """Get recent posts for sidebar/widgets"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT TOP %s p.id, p.title, p.slug, p.cover_image, p.published_at
+            FROM BlogPosts p
+            WHERE p.status = 'published'
+            ORDER BY p.published_at DESC
+        """, (limit,))
+        return [{
+            "id": r[0],
+            "title": r[1],
+            "slug": r[2],
+            "coverImage": r[3],
+            "publishedAt": r[4].isoformat() if r[4] else None
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
 # Include the router in the main app
 app.include_router(api_router)
 app.include_router(admin_router)
