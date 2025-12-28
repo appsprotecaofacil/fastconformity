@@ -236,7 +236,7 @@ const BlogPage = () => {
                           className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-3"
                           style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
                         >
-                          {post.category}
+                          {typeof post.category === 'object' ? post.category.name : post.category}
                         </span>
                       )}
                       <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#1E3A5F] transition-colors">
