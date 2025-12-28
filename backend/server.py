@@ -984,6 +984,209 @@ async def get_quotes(current_user: dict = Depends(require_auth)):
         cursor.close()
         conn.close()
 
+# Product Views Tracking & Recommendations
+@api_router.post("/products/{product_id}/view")
+async def track_product_view(product_id: int, session_id: str, user_id: Optional[int] = None):
+    """Track product view for recommendations"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ProductViews (product_id, session_id, user_id) VALUES (%s, %s, %s)",
+            (product_id, session_id, user_id)
+        )
+        conn.commit()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/products/{product_id}/related")
+async def get_related_products(product_id: int, limit: int = 8):
+    """Get products from the same category"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get current product's category
+        cursor.execute("SELECT category_id FROM Products WHERE id = %s", (product_id,))
+        result = cursor.fetchone()
+        if not result:
+            return []
+        
+        category_id = result[0]
+        
+        # Get products from same category
+        cursor.execute("""
+            SELECT TOP %s p.id, p.title, p.price, p.original_price, p.discount, 
+                   p.installments, p.image, p.free_shipping, p.rating, p.reviews_count,
+                   p.action_type, p.whatsapp_number
+            FROM Products p
+            WHERE p.category_id = %s AND p.id != %s
+            ORDER BY p.sold DESC, p.rating DESC
+        """, (limit, category_id, product_id))
+        
+        products = []
+        for r in cursor.fetchall():
+            installment_price = r[2] / r[5] if r[5] else None
+            products.append({
+                "id": r[0],
+                "title": r[1],
+                "price": float(r[2]),
+                "originalPrice": float(r[3]) if r[3] else None,
+                "discount": r[4],
+                "installments": r[5],
+                "installmentPrice": round(installment_price, 2) if installment_price else None,
+                "image": r[6],
+                "freeShipping": bool(r[7]),
+                "rating": float(r[8]) if r[8] else None,
+                "reviews": r[9],
+                "actionType": r[10] or 'buy',
+                "whatsappNumber": r[11]
+            })
+        
+        return products
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/products/{product_id}/suggestions")
+async def get_product_suggestions(product_id: int, limit: int = 6):
+    """Get products you might like (similar price range, related categories)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get current product's price and category
+        cursor.execute("SELECT price, category_id FROM Products WHERE id = %s", (product_id,))
+        result = cursor.fetchone()
+        if not result:
+            return []
+        
+        price, category_id = result[0], result[1]
+        price_min = float(price) * 0.5
+        price_max = float(price) * 2.0
+        
+        # Get products in similar price range from different categories
+        cursor.execute("""
+            SELECT TOP %s p.id, p.title, p.price, p.original_price, p.discount, 
+                   p.installments, p.image, p.free_shipping, p.rating, p.reviews_count,
+                   p.action_type, p.whatsapp_number
+            FROM Products p
+            WHERE p.id != %s 
+            AND p.category_id != %s
+            AND p.price BETWEEN %s AND %s
+            ORDER BY p.rating DESC, p.sold DESC
+        """, (limit, product_id, category_id, price_min, price_max))
+        
+        products = []
+        for r in cursor.fetchall():
+            installment_price = r[2] / r[5] if r[5] else None
+            products.append({
+                "id": r[0],
+                "title": r[1],
+                "price": float(r[2]),
+                "originalPrice": float(r[3]) if r[3] else None,
+                "discount": r[4],
+                "installments": r[5],
+                "installmentPrice": round(installment_price, 2) if installment_price else None,
+                "image": r[6],
+                "freeShipping": bool(r[7]),
+                "rating": float(r[8]) if r[8] else None,
+                "reviews": r[9],
+                "actionType": r[10] or 'buy',
+                "whatsappNumber": r[11]
+            })
+        
+        return products
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/products/{product_id}/also-viewed")
+async def get_also_viewed_products(product_id: int, session_id: str, limit: int = 8):
+    """Get products that users who viewed this product also viewed"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Find sessions that viewed the current product
+        # Then find other products those sessions also viewed
+        cursor.execute("""
+            SELECT TOP %s p.id, p.title, p.price, p.original_price, p.discount, 
+                   p.installments, p.image, p.free_shipping, p.rating, p.reviews_count,
+                   p.action_type, p.whatsapp_number, COUNT(*) as view_count
+            FROM Products p
+            INNER JOIN ProductViews pv ON p.id = pv.product_id
+            WHERE pv.session_id IN (
+                SELECT DISTINCT session_id 
+                FROM ProductViews 
+                WHERE product_id = %s
+            )
+            AND p.id != %s
+            GROUP BY p.id, p.title, p.price, p.original_price, p.discount, 
+                     p.installments, p.image, p.free_shipping, p.rating, p.reviews_count,
+                     p.action_type, p.whatsapp_number
+            ORDER BY view_count DESC, p.rating DESC
+        """, (limit, product_id, product_id))
+        
+        products = []
+        for r in cursor.fetchall():
+            installment_price = r[2] / r[5] if r[5] else None
+            products.append({
+                "id": r[0],
+                "title": r[1],
+                "price": float(r[2]),
+                "originalPrice": float(r[3]) if r[3] else None,
+                "discount": r[4],
+                "installments": r[5],
+                "installmentPrice": round(installment_price, 2) if installment_price else None,
+                "image": r[6],
+                "freeShipping": bool(r[7]),
+                "rating": float(r[8]) if r[8] else None,
+                "reviews": r[9],
+                "actionType": r[10] or 'buy',
+                "whatsappNumber": r[11]
+            })
+        
+        # If not enough data, fallback to best sellers in same category
+        if len(products) < 4:
+            cursor.execute("SELECT category_id FROM Products WHERE id = %s", (product_id,))
+            cat_result = cursor.fetchone()
+            if cat_result:
+                existing_ids = [p["id"] for p in products] + [product_id]
+                placeholders = ','.join(['%s'] * len(existing_ids))
+                cursor.execute(f"""
+                    SELECT TOP %s p.id, p.title, p.price, p.original_price, p.discount, 
+                           p.installments, p.image, p.free_shipping, p.rating, p.reviews_count,
+                           p.action_type, p.whatsapp_number
+                    FROM Products p
+                    WHERE p.category_id = %s AND p.id NOT IN ({placeholders})
+                    ORDER BY p.sold DESC
+                """, (limit - len(products), cat_result[0], *existing_ids))
+                
+                for r in cursor.fetchall():
+                    installment_price = r[2] / r[5] if r[5] else None
+                    products.append({
+                        "id": r[0],
+                        "title": r[1],
+                        "price": float(r[2]),
+                        "originalPrice": float(r[3]) if r[3] else None,
+                        "discount": r[4],
+                        "installments": r[5],
+                        "installmentPrice": round(installment_price, 2) if installment_price else None,
+                        "image": r[6],
+                        "freeShipping": bool(r[7]),
+                        "rating": float(r[8]) if r[8] else None,
+                        "reviews": r[9],
+                        "actionType": r[10] or 'buy',
+                        "whatsappNumber": r[11]
+                    })
+        
+        return products
+    finally:
+        cursor.close()
+        conn.close()
+
 # Include the router in the main app
 app.include_router(api_router)
 app.include_router(admin_router)
