@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import OrdersPage from './pages/OrdersPage';
 import AdminApp from './admin/AdminApp';
+import DesignShowcase from './pages/DesignShowcase';
 import { authAPI, cartAPI } from './services/api';
 
 // Create Cart Context
@@ -244,6 +245,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/design-showcase" element={<DesignShowcase />} />
         <Route path="/*" element={
           <AuthProvider>
             <CartProviderWrapper />
