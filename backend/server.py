@@ -482,6 +482,39 @@ def seed_data():
                 """, prod)
             conn.commit()
             logger.info("Products seeded successfully")
+        
+        # Seed display settings if empty
+        cursor.execute("SELECT COUNT(*) FROM ProductDisplaySettings")
+        if cursor.fetchone()[0] == 0:
+            display_settings = [
+                # Price group
+                ('show_price', 1, 'Preço', 'price', 1),
+                ('show_original_price', 1, 'Preço original (riscado)', 'price', 2),
+                ('show_discount', 1, 'Desconto', 'price', 3),
+                ('show_installments', 1, 'Parcelamento', 'price', 4),
+                # Delivery group
+                ('show_free_shipping', 1, 'Frete grátis', 'delivery', 10),
+                # Product info group
+                ('show_specs', 1, 'Especificações técnicas', 'product', 20),
+                ('show_brand', 1, 'Marca', 'product', 21),
+                ('show_condition', 1, 'Condição (novo/usado)', 'product', 22),
+                ('show_stock', 1, 'Quantidade em estoque', 'product', 23),
+                ('show_sold', 1, 'Quantidade vendida', 'product', 24),
+                # Interaction group
+                ('show_rating', 1, 'Avaliações / Estrelas', 'interaction', 30),
+                ('show_reviews_count', 1, 'Número de reviews', 'interaction', 31),
+                ('show_action_button', 1, 'Botão de ação', 'interaction', 32),
+                # Seller group
+                ('show_seller_info', 1, 'Informações do vendedor', 'seller', 40),
+            ]
+            for setting in display_settings:
+                cursor.execute("""
+                    INSERT INTO ProductDisplaySettings (setting_key, setting_value, setting_label, setting_group, sort_order)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, setting)
+            conn.commit()
+            logger.info("Display settings seeded successfully")
+            
             
     except Exception as e:
         logger.error(f"Error seeding data: {e}")
