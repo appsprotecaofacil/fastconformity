@@ -914,6 +914,62 @@ async def create_review(review: ReviewCreate, current_user: dict = Depends(requi
         cursor.close()
         conn.close()
 
+# Quotes Routes
+@api_router.post("/quotes")
+async def create_quote(quote: QuoteCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Verify product exists and is quote type
+        cursor.execute("SELECT id, title, action_type FROM Products WHERE id = %s", (quote.product_id,))
+        product = cursor.fetchone()
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        
+        cursor.execute(
+            """INSERT INTO Quotes (product_id, customer_name, customer_email, customer_phone, message, status) 
+               VALUES (%s, %s, %s, %s, %s, 'pending')""",
+            (quote.product_id, quote.customer_name, quote.customer_email, quote.customer_phone, quote.message)
+        )
+        conn.commit()
+        
+        return {"message": "Cotação enviada com sucesso! Entraremos em contato em breve."}
+    finally:
+        cursor.close()
+        conn.close()
+
+@api_router.get("/quotes")
+async def get_quotes(current_user: dict = Depends(require_auth)):
+    """Get quotes for the logged in user (by email)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT email FROM Users WHERE id = %s", (current_user["id"],))
+        user = cursor.fetchone()
+        if not user:
+            return []
+        
+        cursor.execute("""
+            SELECT q.id, q.product_id, p.title, p.image, q.message, q.status, q.created_at
+            FROM Quotes q
+            JOIN Products p ON q.product_id = p.id
+            WHERE q.customer_email = %s
+            ORDER BY q.created_at DESC
+        """, (user[0],))
+        
+        return [{
+            "id": r[0],
+            "productId": r[1],
+            "productTitle": r[2],
+            "productImage": r[3],
+            "message": r[4],
+            "status": r[5],
+            "date": r[6].isoformat() if r[6] else None
+        } for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
 # Include the router in the main app
 app.include_router(api_router)
 app.include_router(admin_router)
