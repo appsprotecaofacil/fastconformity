@@ -180,15 +180,23 @@ def init_database():
             )
         """)
         
-        # Create Categories table
+        # Create Categories table with parent_id for hierarchy
         cursor.execute("""
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Categories' AND xtype='U')
             CREATE TABLE Categories (
                 id INT IDENTITY(1,1) PRIMARY KEY,
                 name NVARCHAR(50) NOT NULL,
                 slug NVARCHAR(50) UNIQUE NOT NULL,
-                icon NVARCHAR(50)
+                icon NVARCHAR(50),
+                parent_id INT NULL,
+                FOREIGN KEY (parent_id) REFERENCES Categories(id)
             )
+        """)
+        
+        # Add parent_id column if table exists but column doesn't
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Categories') AND name = 'parent_id')
+            ALTER TABLE Categories ADD parent_id INT NULL
         """)
         
         # Create Products table
