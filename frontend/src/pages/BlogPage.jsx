@@ -34,7 +34,7 @@ const BlogPage = () => {
         blogAPI.getCategories()
       ]);
       setPosts(postsData.posts || postsData);
-      setTotalPages(postsData.totalPages || 1);
+      setTotalPages(postsData.pages || 1);
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error fetching blog data:', error);
