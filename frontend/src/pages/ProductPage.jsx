@@ -445,6 +445,17 @@ const ProductPage = () => {
                   <span className="text-xs text-[#00A650]">{product.seller?.reputation}</span>
                 </div>
               </div>
+
+              {/* Sidebar: Related Products (compact) */}
+              {relatedProducts.length > 0 && (
+                <div className="mt-6 pt-4 border-t">
+                  <ProductCarousel 
+                    title="Produtos relacionados"
+                    products={relatedProducts.slice(0, 4)}
+                    compact={true}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
