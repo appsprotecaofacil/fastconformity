@@ -515,6 +515,81 @@ def init_database():
             )
         """)
         
+        # Create FooterSettings table for footer configuration
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterSettings' AND xtype='U')
+            CREATE TABLE FooterSettings (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                setting_key NVARCHAR(100) UNIQUE NOT NULL,
+                setting_value NVARCHAR(MAX),
+                updated_at DATETIME DEFAULT GETDATE()
+            )
+        """)
+        
+        # Create FooterLinks table for footer menu columns
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterLinkColumns' AND xtype='U')
+            CREATE TABLE FooterLinkColumns (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                title NVARCHAR(100) NOT NULL,
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1
+            )
+        """)
+        
+        # Create FooterLinks table for individual links
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterLinks' AND xtype='U')
+            CREATE TABLE FooterLinks (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                column_id INT NOT NULL,
+                label NVARCHAR(100) NOT NULL,
+                url NVARCHAR(500) NOT NULL,
+                is_external BIT DEFAULT 0,
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1,
+                FOREIGN KEY (column_id) REFERENCES FooterLinkColumns(id) ON DELETE CASCADE
+            )
+        """)
+        
+        # Create FooterSocialLinks table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterSocialLinks' AND xtype='U')
+            CREATE TABLE FooterSocialLinks (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                platform NVARCHAR(50) NOT NULL,
+                url NVARCHAR(500),
+                icon NVARCHAR(50),
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1
+            )
+        """)
+        
+        # Create FooterPaymentMethods table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterPaymentMethods' AND xtype='U')
+            CREATE TABLE FooterPaymentMethods (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                name NVARCHAR(50) NOT NULL,
+                icon NVARCHAR(100),
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1
+            )
+        """)
+        
+        # Create FooterSecurityBadges table
+        cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FooterSecurityBadges' AND xtype='U')
+            CREATE TABLE FooterSecurityBadges (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                name NVARCHAR(100) NOT NULL,
+                image_url NVARCHAR(500),
+                link_url NVARCHAR(500),
+                sort_order INT DEFAULT 0,
+                is_active BIT DEFAULT 1
+            )
+        """)
+        
         conn.commit()
         logger.info("Database tables initialized successfully")
     except Exception as e:
