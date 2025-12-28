@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { products, mockReviews } from '../data/mock';
-import { useCart } from '../App';
+import { productsAPI, reviewsAPI } from '../services/api';
+import { useCart, useAuth } from '../App';
 import { 
   ChevronLeft, ChevronRight, Heart, Share2, Truck, ShieldCheck, 
   Star, Minus, Plus, MapPin, RotateCcw, Award
@@ -11,11 +11,42 @@ const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const product = products.find(p => p.id === parseInt(id));
+  const { user } = useAuth();
   
+  const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [productData, reviewsData] = await Promise.all([
+          productsAPI.getById(id),
+          reviewsAPI.getByProduct(id)
+        ]);
+        setProduct(productData);
+        setReviews(reviewsData);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -26,20 +57,31 @@ const ProductPage = () => {
     );
   }
 
-  const reviews = mockReviews.filter(r => r.productId === product.id);
   const images = product.images || [product.image];
 
   const formatPrice = (price) => {
     return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  const handleBuyNow = () => {
-    addToCart(product, quantity);
-    navigate('/cart');
+  const handleBuyNow = async () => {
+    setAddingToCart(true);
+    try {
+      await addToCart(product, quantity);
+      navigate('/cart');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
+  const handleAddToCart = async () => {
+    setAddingToCart(true);
+    try {
+      await addToCart(product, quantity);
+      // Show success feedback
+      alert('Produto adicionado ao carrinho!');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const nextImage = () => {
@@ -118,7 +160,7 @@ const ProductPage = () => {
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <span className="capitalize">{product.condition}</span>
               <span>|</span>
-              <span>{product.sold.toLocaleString()} vendidos</span>
+              <span>{product.sold?.toLocaleString()} vendidos</span>
             </div>
 
             {/* Title */}
@@ -133,7 +175,7 @@ const ProductPage = () => {
                   <Star 
                     key={i} 
                     size={16} 
-                    className={i < Math.floor(product.rating) ? 'text-[#3483FA] fill-[#3483FA]' : 'text-gray-300'}
+                    className={i < Math.floor(product.rating || 0) ? 'text-[#3483FA] fill-[#3483FA]' : 'text-gray-300'}
                   />
                 ))}
               </div>
@@ -172,7 +214,7 @@ const ProductPage = () => {
             </div>
 
             {/* Specs */}
-            {product.specs && (
+            {product.specs && product.specs.length > 0 && (
               <div className="mb-6">
                 <h3 className="font-medium text-gray-800 mb-2">Especificações</h3>
                 <table className="w-full text-sm">
@@ -242,13 +284,15 @@ const ProductPage = () => {
               <div className="space-y-2">
                 <button 
                   onClick={handleBuyNow}
-                  className="w-full bg-[#3483FA] text-white py-3 rounded font-medium hover:bg-[#2968c8] transition-colors"
+                  disabled={addingToCart}
+                  className="w-full bg-[#3483FA] text-white py-3 rounded font-medium hover:bg-[#2968c8] transition-colors disabled:opacity-50"
                 >
-                  Comprar agora
+                  {addingToCart ? 'Processando...' : 'Comprar agora'}
                 </button>
                 <button 
                   onClick={handleAddToCart}
-                  className="w-full bg-[#E8F4FD] text-[#3483FA] py-3 rounded font-medium hover:bg-[#d4ebfc] transition-colors"
+                  disabled={addingToCart}
+                  className="w-full bg-[#E8F4FD] text-[#3483FA] py-3 rounded font-medium hover:bg-[#d4ebfc] transition-colors disabled:opacity-50"
                 >
                   Adicionar ao carrinho
                 </button>
@@ -284,10 +328,10 @@ const ProductPage = () => {
               {/* Seller Info */}
               <div className="mt-4 pt-4 border-t">
                 <p className="text-sm text-gray-500 mb-1">Vendido por</p>
-                <p className="text-sm text-[#3483FA] font-medium">{product.seller.name}</p>
+                <p className="text-sm text-[#3483FA] font-medium">{product.seller?.name}</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Award size={14} className="text-[#00A650]" />
-                  <span className="text-xs text-[#00A650]">{product.seller.reputation}</span>
+                  <span className="text-xs text-[#00A650]">{product.seller?.reputation}</span>
                 </div>
               </div>
             </div>
@@ -301,13 +345,13 @@ const ProductPage = () => {
           {/* Rating Summary */}
           <div className="flex items-center gap-6 mb-6">
             <div className="text-center">
-              <div className="text-5xl font-light text-gray-800">{product.rating}</div>
+              <div className="text-5xl font-light text-gray-800">{product.rating || 0}</div>
               <div className="flex items-center justify-center gap-1 mt-1">
                 {[...Array(5)].map((_, i) => (
                   <Star 
                     key={i} 
                     size={16} 
-                    className={i < Math.floor(product.rating) ? 'text-[#3483FA] fill-[#3483FA]' : 'text-gray-300'}
+                    className={i < Math.floor(product.rating || 0) ? 'text-[#3483FA] fill-[#3483FA]' : 'text-gray-300'}
                   />
                 ))}
               </div>

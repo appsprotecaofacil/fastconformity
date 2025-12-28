@@ -1,14 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { products, categories, brands, conditions } from '../data/mock';
+import { productsAPI, categoriesAPI } from '../services/api';
 import { ChevronDown, ChevronUp, Grid, List, SlidersHorizontal, X } from 'lucide-react';
+
+const conditions = [
+  { value: 'novo', label: 'Novo' },
+  { value: 'usado', label: 'Usado' }
+];
+
+const brands = ['Apple', 'Samsung', 'Sony', 'LG', 'Nike', 'Acer', 'Brastemp', 'Amazon', 'Nespresso', 'Caloi'];
 
 const SearchPage = ({ deals = false }) => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const categorySlug = searchParams.get('category') || '';
 
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('relevance');
   const [filters, setFilters] = useState({
@@ -28,6 +38,29 @@ const SearchPage = ({ deals = false }) => {
   });
 
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          productsAPI.getAll({
+            search: query || undefined,
+            category: categorySlug || undefined,
+            sort: sortBy
+          }),
+          categoriesAPI.getAll()
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [query, categorySlug, sortBy]);
+
+  useEffect(() => {
     setFilters(prev => ({ ...prev, category: categorySlug }));
   }, [categorySlug]);
 
@@ -39,18 +72,8 @@ const SearchPage = ({ deals = false }) => {
       result = result.filter(p => p.discount >= 15);
     }
 
-    // Filter by search query
-    if (query) {
-      const lowerQuery = query.toLowerCase();
-      result = result.filter(p => 
-        p.title.toLowerCase().includes(lowerQuery) ||
-        p.brand.toLowerCase().includes(lowerQuery) ||
-        p.category.toLowerCase().includes(lowerQuery)
-      );
-    }
-
-    // Filter by category
-    if (filters.category) {
+    // Filter by category (client-side if not from URL)
+    if (filters.category && !categorySlug) {
       result = result.filter(p => p.category === filters.category);
     }
 
@@ -77,24 +100,8 @@ const SearchPage = ({ deals = false }) => {
       result = result.filter(p => p.freeShipping);
     }
 
-    // Sort
-    switch (sortBy) {
-      case 'price_asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      default:
-        // relevance - by sold count
-        result.sort((a, b) => b.sold - a.sold);
-    }
-
     return result;
-  }, [query, filters, sortBy, deals]);
+  }, [products, filters, deals, categorySlug]);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -363,7 +370,11 @@ const SearchPage = ({ deals = false }) => {
 
         {/* Product Grid/List */}
         <div className="flex-1">
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="bg-white rounded-lg p-8 text-center">
               <p className="text-gray-500 text-lg">Nenhum produto encontrado</p>
               <p className="text-gray-400 text-sm mt-2">Tente ajustar os filtros ou buscar por outro termo</p>

@@ -1,14 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Banner from '../components/Banner';
 import CategoryGrid from '../components/CategoryGrid';
 import ProductCard from '../components/ProductCard';
-import { products } from '../data/mock';
+import { productsAPI } from '../services/api';
 import { Truck, CreditCard, ShieldCheck } from 'lucide-react';
 
 const HomePage = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await productsAPI.getAll();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const dealProducts = products.filter(p => p.discount >= 20).slice(0, 6);
   const techProducts = products.filter(p => p.category === 'tecnologia').slice(0, 6);
   const recommendedProducts = products.slice(0, 12);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3483FA]"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -48,19 +73,21 @@ const HomePage = () => {
       <CategoryGrid />
 
       {/* Deals Section */}
-      <section className="max-w-[1200px] mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Ofertas do dia</h2>
-            <a href="/deals" className="text-[#3483FA] text-sm hover:underline">Ver todas</a>
+      {dealProducts.length > 0 && (
+        <section className="max-w-[1200px] mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Ofertas do dia</h2>
+              <a href="/deals" className="text-[#3483FA] text-sm hover:underline">Ver todas</a>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {dealProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {dealProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Mercado Pago Banner */}
       <section className="max-w-[1200px] mx-auto px-4 py-4">
@@ -81,19 +108,21 @@ const HomePage = () => {
       </section>
 
       {/* Technology Section */}
-      <section className="max-w-[1200px] mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Tecnologia</h2>
-            <a href="/search?category=tecnologia" className="text-[#3483FA] text-sm hover:underline">Ver mais</a>
+      {techProducts.length > 0 && (
+        <section className="max-w-[1200px] mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Tecnologia</h2>
+              <a href="/search?category=tecnologia" className="text-[#3483FA] text-sm hover:underline">Ver mais</a>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {techProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {techProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Subscription Banner */}
       <section className="max-w-[1200px] mx-auto px-4 py-4">
@@ -114,16 +143,18 @@ const HomePage = () => {
       </section>
 
       {/* Recommended Products */}
-      <section className="max-w-[1200px] mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg p-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recomendados para você</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recommendedProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+      {recommendedProducts.length > 0 && (
+        <section className="max-w-[1200px] mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg p-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Recomendados para você</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recommendedProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 };
