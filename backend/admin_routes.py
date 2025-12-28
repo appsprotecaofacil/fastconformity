@@ -616,6 +616,11 @@ async def delete_category(category_id: int):
         if cursor.fetchone()[0] > 0:
             raise HTTPException(status_code=400, detail="Categoria possui produtos associados")
         
+        # Check if category has children
+        cursor.execute("SELECT COUNT(*) FROM Categories WHERE parent_id = %s", (category_id,))
+        if cursor.fetchone()[0] > 0:
+            raise HTTPException(status_code=400, detail="Categoria possui subcategorias associadas. Exclua as subcategorias primeiro.")
+        
         cursor.execute("DELETE FROM Categories WHERE id = %s", (category_id,))
         conn.commit()
         
