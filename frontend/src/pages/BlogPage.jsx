@@ -175,7 +175,7 @@ const BlogPage = () => {
                         className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4 w-fit"
                         style={{ backgroundColor: colors.accent }}
                       >
-                        {featuredPost.category}
+                        {typeof featuredPost.category === 'object' ? featuredPost.category.name : featuredPost.category}
                       </span>
                     )}
                     <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 group-hover:text-[#1E3A5F] transition-colors">
