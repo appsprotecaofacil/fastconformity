@@ -463,6 +463,14 @@ const ProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Quote Modal */}
+      {showQuoteModal && (
+        <QuoteModal 
+          product={product} 
+          onClose={() => setShowQuoteModal(false)} 
+        />
+      )}
     </div>
   );
 };
