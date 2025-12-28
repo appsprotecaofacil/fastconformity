@@ -222,4 +222,24 @@ export const adminBlogCommentsAPI = {
   }
 };
 
+// Display Settings
+export const adminDisplaySettingsAPI = {
+  getAll: async () => {
+    const response = await adminApi.get('/display-settings');
+    return response.data;
+  },
+  update: async (data) => {
+    const response = await adminApi.put('/display-settings', data);
+    return response.data;
+  },
+  getProductOverrides: async (productId) => {
+    const response = await adminApi.get(`/display-settings/product/${productId}`);
+    return response.data;
+  },
+  updateProductOverrides: async (productId, overrides) => {
+    const response = await adminApi.put(`/display-settings/product/${productId}`, overrides);
+    return response.data;
+  }
+};
+
 export default adminApi;
