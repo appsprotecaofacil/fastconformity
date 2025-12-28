@@ -129,7 +129,8 @@ const AdminProductForm = () => {
         discount: parseInt(formData.discount) || 0,
         installments: parseInt(formData.installments) || 12,
         stock: parseInt(formData.stock) || 0,
-        category_id: parseInt(formData.category_id)
+        category_id: parseInt(formData.category_id),
+        whatsapp_number: formData.whatsapp_number || null
       };
 
       if (isEdit) {
