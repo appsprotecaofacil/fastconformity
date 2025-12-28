@@ -142,7 +142,7 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
               alt={product.title}
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
-            {product.actionType === 'buy' && product.freeShipping && (
+            {show('show_free_shipping') && product.actionType === 'buy' && product.freeShipping && (
               <span 
                 className="absolute top-3 left-3 px-3 py-1 text-xs font-medium text-white rounded-full"
                 style={{ backgroundColor: colors.accent }}
@@ -164,13 +164,13 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
               {product.title}
             </h3>
             
-            {product.rating && (
+            {show('show_rating') && product.rating && (
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-1">
                   <Star size={14} className="fill-yellow-400 text-yellow-400" />
                   <span className="text-sm font-medium">{product.rating}</span>
                 </div>
-                <span className="text-sm text-gray-400">({product.reviews})</span>
+                {show('show_reviews_count') && <span className="text-sm text-gray-400">({product.reviews})</span>}
               </div>
             )}
             
