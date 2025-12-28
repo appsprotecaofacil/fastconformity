@@ -581,6 +581,17 @@ async def update_category(category_id: int, category: CategoryUpdate):
         if category.icon is not None:
             updates.append("icon = %s")
             params.append(category.icon)
+        if category.parent_id is not None:
+            # Prevent circular reference
+            if category.parent_id == category_id:
+                raise HTTPException(status_code=400, detail="Uma categoria não pode ser pai de si mesma")
+            # Check if parent exists
+            if category.parent_id > 0:
+                cursor.execute("SELECT id FROM Categories WHERE id = %s", (category.parent_id,))
+                if not cursor.fetchone():
+                    raise HTTPException(status_code=400, detail="Categoria pai não encontrada")
+            updates.append("parent_id = %s")
+            params.append(category.parent_id if category.parent_id > 0 else None)
         
         if not updates:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
