@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, MessageCircle, FileText } from 'lucide-react';
 import QuoteModal from './QuoteModal';
+import { useDisplaySettings } from '../context/DisplaySettingsContext';
 
 // Paleta de cores FastConformity
 const colors = {
@@ -11,6 +12,10 @@ const colors = {
 
 const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const { getDisplayValue } = useDisplaySettings();
+
+  // Get display settings (product overrides take priority over global)
+  const show = (key) => getDisplayValue(key, product.displayOverrides);
 
   const formatPrice = (price) => {
     return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
