@@ -287,33 +287,49 @@ const ProductPage = () => {
               </div>
 
               {/* Stock */}
-              <div className="mb-4">
-                <p className="text-sm">
-                  <span className="text-[#00A650]">Estoque disponível</span>
-                </p>
-                <p className="text-xs text-gray-500">{product.stock} unidades</p>
-              </div>
-
-              {/* Quantity */}
-              <div className="mb-4">
-                <label className="text-sm text-gray-600 block mb-2">Quantidade:</label>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-1 border rounded hover:bg-gray-50"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="p-1 border rounded hover:bg-gray-50"
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <span className="text-sm text-gray-400">({product.stock} disponíveis)</span>
+              {actionType === 'buy' && (
+                <div className="mb-4">
+                  <p className="text-sm">
+                    <span className="text-[#00A650]">Estoque disponível</span>
+                  </p>
+                  <p className="text-xs text-gray-500">{product.stock} unidades</p>
                 </div>
-              </div>
+              )}
+
+              {/* Quantity - only for buy */}
+              {actionType === 'buy' && (
+                <div className="mb-4">
+                  <label className="text-sm text-gray-600 block mb-2">Quantidade:</label>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="p-1 border rounded hover:bg-gray-50"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="w-12 text-center">{quantity}</span>
+                    <button 
+                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                      className="p-1 border rounded hover:bg-gray-50"
+                    >
+                      <Plus size={16} />
+                    </button>
+                    <span className="text-sm text-gray-400">({product.stock} disponíveis)</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Info for WhatsApp/Quote */}
+              {actionType !== 'buy' && (
+                <div className="mb-4 p-3 rounded-xl" style={{ backgroundColor: actionType === 'whatsapp' ? '#25D36615' : `${colors.primary}10` }}>
+                  <p className="text-sm" style={{ color: actionType === 'whatsapp' ? '#128C7E' : colors.primary }}>
+                    {actionType === 'whatsapp' 
+                      ? '💬 Converse diretamente com nosso vendedor para negociar preços e condições especiais.'
+                      : '📋 Preencha o formulário de cotação e entraremos em contato com uma proposta personalizada.'
+                    }
+                  </p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="space-y-2">
