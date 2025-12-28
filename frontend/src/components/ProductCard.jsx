@@ -86,10 +86,14 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
   const renderPrice = () => {
     const actionType = product.actionType || 'buy';
 
+    if (!show('show_price')) {
+      return null;
+    }
+
     if (actionType === 'buy') {
       return (
         <>
-          {product.originalPrice && (
+          {show('show_original_price') && product.originalPrice && (
             <span className="text-xs text-gray-400 line-through block">
               {formatPrice(product.originalPrice)}
             </span>
@@ -98,8 +102,13 @@ const ProductCard = ({ product, horizontal = false, onAddToCart }) => {
             <span className="text-xl font-bold" style={{ color: colors.primary }}>
               {formatPrice(product.price)}
             </span>
+            {show('show_discount') && product.discount > 0 && (
+              <span className="text-xs text-green-600 font-medium">
+                -{product.discount}%
+              </span>
+            )}
           </div>
-          {product.installments && (
+          {show('show_installments') && product.installments && (
             <p className="text-xs text-gray-500 mb-3">
               em {product.installments}x {formatPrice(product.installmentPrice)}
             </p>
