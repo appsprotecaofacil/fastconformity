@@ -425,6 +425,12 @@ async def update_product(product_id: int, product: ProductUpdate):
         if product.specs is not None:
             updates.append("specs = %s")
             params.append(json.dumps(product.specs))
+        if product.action_type is not None:
+            updates.append("action_type = %s")
+            params.append(product.action_type)
+        if product.whatsapp_number is not None:
+            updates.append("whatsapp_number = %s")
+            params.append(product.whatsapp_number if product.whatsapp_number else None)
         
         if not updates:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
