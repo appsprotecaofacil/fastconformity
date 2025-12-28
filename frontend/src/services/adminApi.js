@@ -242,4 +242,103 @@ export const adminDisplaySettingsAPI = {
   }
 };
 
+// Home Management API
+export const adminHomeAPI = {
+  // Sections
+  getSections: async () => {
+    const response = await adminApi.get('/home/sections');
+    return response.data;
+  },
+  updateSection: async (id, data) => {
+    const response = await adminApi.put(`/home/sections/${id}`, data);
+    return response.data;
+  },
+  reorderSections: async (order) => {
+    const response = await adminApi.put('/home/sections/reorder', order);
+    return response.data;
+  },
+  
+  // Hero Slides
+  getHeroSlides: async () => {
+    const response = await adminApi.get('/home/hero-slides');
+    return response.data;
+  },
+  createHeroSlide: async (data) => {
+    const response = await adminApi.post('/home/hero-slides', data);
+    return response.data;
+  },
+  updateHeroSlide: async (id, data) => {
+    const response = await adminApi.put(`/home/hero-slides/${id}`, data);
+    return response.data;
+  },
+  deleteHeroSlide: async (id) => {
+    const response = await adminApi.delete(`/home/hero-slides/${id}`);
+    return response.data;
+  },
+  
+  // Carousels
+  getCarousels: async () => {
+    const response = await adminApi.get('/home/carousels');
+    return response.data;
+  },
+  createCarousel: async (data) => {
+    const response = await adminApi.post('/home/carousels', data);
+    return response.data;
+  },
+  updateCarousel: async (id, data) => {
+    const response = await adminApi.put(`/home/carousels/${id}`, data);
+    return response.data;
+  },
+  deleteCarousel: async (id) => {
+    const response = await adminApi.delete(`/home/carousels/${id}`);
+    return response.data;
+  },
+  
+  // Banners
+  getBanners: async () => {
+    const response = await adminApi.get('/home/banners');
+    return response.data;
+  },
+  createBanner: async (data) => {
+    const response = await adminApi.post('/home/banners', data);
+    return response.data;
+  },
+  updateBanner: async (id, data) => {
+    const response = await adminApi.put(`/home/banners/${id}`, data);
+    return response.data;
+  },
+  deleteBanner: async (id) => {
+    const response = await adminApi.delete(`/home/banners/${id}`);
+    return response.data;
+  },
+  
+  // Content Blocks
+  getContentBlocks: async () => {
+    const response = await adminApi.get('/home/content-blocks');
+    return response.data;
+  },
+  createContentBlock: async (data) => {
+    const response = await adminApi.post('/home/content-blocks', data);
+    return response.data;
+  },
+  updateContentBlock: async (id, data) => {
+    const response = await adminApi.put(`/home/content-blocks/${id}`, data);
+    return response.data;
+  },
+  deleteContentBlock: async (id) => {
+    const response = await adminApi.delete(`/home/content-blocks/${id}`);
+    return response.data;
+  },
+  
+  // Settings
+  getSettings: async () => {
+    const response = await adminApi.get('/home/settings');
+    return response.data;
+  },
+  updateSettings: async (data) => {
+    const response = await adminApi.put('/home/settings', data);
+    return response.data;
+  }
+};
+
 export default adminApi;
