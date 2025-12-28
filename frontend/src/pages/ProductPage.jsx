@@ -91,6 +91,18 @@ const ProductPage = () => {
     }
   };
 
+  const handleWhatsAppClick = () => {
+    const phone = product.whatsappNumber?.replace(/\D/g, '') || '5511999999999';
+    const message = encodeURIComponent(`Olá! Tenho interesse no produto: ${product.title}`);
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
+
+  const handleQuoteClick = () => {
+    setShowQuoteModal(true);
+  };
+
+  const actionType = product?.actionType || 'buy';
+
   const nextImage = () => {
     setSelectedImage((prev) => (prev + 1) % images.length);
   };
