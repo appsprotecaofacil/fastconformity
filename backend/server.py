@@ -753,6 +753,104 @@ def seed_data():
                 cursor.execute("INSERT INTO HomeSettings (setting_key, setting_value) VALUES (%s, %s)", setting)
             conn.commit()
             logger.info("Home settings seeded successfully")
+        
+        # Seed footer settings if empty
+        cursor.execute("SELECT COUNT(*) FROM FooterSettings")
+        if cursor.fetchone()[0] == 0:
+            footer_settings = [
+                ('company_name', 'FastConformity'),
+                ('company_description', 'Sua loja online de confiança. Produtos de qualidade com os melhores preços e entrega rápida.'),
+                ('company_cnpj', ''),
+                ('company_logo', ''),
+                ('contact_phone', '(11) 9999-9999'),
+                ('contact_whatsapp', '5511999999999'),
+                ('contact_email', 'contato@fastconformity.com'),
+                ('contact_address', 'São Paulo - SP, Brasil'),
+                ('contact_hours', 'Seg-Sex: 9h às 18h'),
+                ('copyright_text', '© {year} FastConformity. Todos os direitos reservados.'),
+                ('app_ios_url', ''),
+                ('app_android_url', ''),
+                ('apps_enabled', 'false'),
+                ('payment_methods_enabled', 'true'),
+                ('security_badges_enabled', 'true'),
+            ]
+            for setting in footer_settings:
+                cursor.execute("INSERT INTO FooterSettings (setting_key, setting_value) VALUES (%s, %s)", setting)
+            conn.commit()
+            logger.info("Footer settings seeded successfully")
+        
+        # Seed footer social links if empty
+        cursor.execute("SELECT COUNT(*) FROM FooterSocialLinks")
+        if cursor.fetchone()[0] == 0:
+            social_links = [
+                ('Facebook', 'https://facebook.com', 'Facebook', 1, 1),
+                ('Instagram', 'https://instagram.com', 'Instagram', 2, 1),
+                ('Twitter', 'https://twitter.com', 'Twitter', 3, 1),
+                ('YouTube', 'https://youtube.com', 'Youtube', 4, 1),
+                ('LinkedIn', '', 'Linkedin', 5, 0),
+                ('TikTok', '', 'Music', 6, 0),
+            ]
+            for social in social_links:
+                cursor.execute("""
+                    INSERT INTO FooterSocialLinks (platform, url, icon, sort_order, is_active)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, social)
+            conn.commit()
+            logger.info("Footer social links seeded successfully")
+        
+        # Seed footer link columns if empty
+        cursor.execute("SELECT COUNT(*) FROM FooterLinkColumns")
+        if cursor.fetchone()[0] == 0:
+            columns = [
+                ('Institucional', 1, 1),
+                ('Ajuda', 2, 1),
+                ('Minha Conta', 3, 1),
+            ]
+            for col in columns:
+                cursor.execute("INSERT INTO FooterLinkColumns (title, sort_order, is_active) VALUES (%s, %s, %s)", col)
+            conn.commit()
+            
+            # Add links to columns
+            links = [
+                # Institucional (column_id=1)
+                (1, 'Sobre nós', '/about', 0, 1, 1),
+                (1, 'Política de privacidade', '/privacy', 0, 2, 1),
+                (1, 'Termos de uso', '/terms', 0, 3, 1),
+                (1, 'Trabalhe conosco', '/careers', 0, 4, 1),
+                # Ajuda (column_id=2)
+                (2, 'Central de ajuda', '/help', 0, 1, 1),
+                (2, 'Como comprar', '/how-to-buy', 0, 2, 1),
+                (2, 'Formas de pagamento', '/payment-methods', 0, 3, 1),
+                (2, 'Trocas e devoluções', '/returns', 0, 4, 1),
+                # Minha Conta (column_id=3)
+                (3, 'Entrar', '/login', 0, 1, 1),
+                (3, 'Criar conta', '/register', 0, 2, 1),
+                (3, 'Meus pedidos', '/orders', 0, 3, 1),
+                (3, 'Favoritos', '/favorites', 0, 4, 1),
+            ]
+            for link in links:
+                cursor.execute("""
+                    INSERT INTO FooterLinks (column_id, label, url, is_external, sort_order, is_active)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, link)
+            conn.commit()
+            logger.info("Footer link columns seeded successfully")
+        
+        # Seed payment methods if empty
+        cursor.execute("SELECT COUNT(*) FROM FooterPaymentMethods")
+        if cursor.fetchone()[0] == 0:
+            payment_methods = [
+                ('Visa', 'visa', 1, 1),
+                ('Mastercard', 'mastercard', 2, 1),
+                ('Pix', 'pix', 3, 1),
+                ('Boleto', 'boleto', 4, 1),
+                ('American Express', 'amex', 5, 0),
+                ('Elo', 'elo', 6, 0),
+            ]
+            for pm in payment_methods:
+                cursor.execute("INSERT INTO FooterPaymentMethods (name, icon, sort_order, is_active) VALUES (%s, %s, %s, %s)", pm)
+            conn.commit()
+            logger.info("Footer payment methods seeded successfully")
             
             
     except Exception as e:
