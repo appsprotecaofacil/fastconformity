@@ -947,3 +947,102 @@ async def delete_admin(admin_id: int):
     finally:
         cursor.close()
         conn.close()
+
+# Quotes Management
+@admin_router.get("/quotes")
+async def list_quotes(status: Optional[str] = None, search: Optional[str] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT q.id, q.product_id, p.title as product_title, p.image as product_image,
+                   q.customer_name, q.customer_email, q.customer_phone, q.message, 
+                   q.status, q.created_at
+            FROM Quotes q
+            JOIN Products p ON q.product_id = p.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if status:
+            query += " AND q.status = %s"
+            params.append(status)
+        
+        if search:
+            query += " AND (q.customer_name LIKE %s OR q.customer_email LIKE %s OR p.title LIKE %s)"
+            params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
+        
+        query += " ORDER BY q.created_at DESC"
+        
+        cursor.execute(query, params)
+        return [{
+            "id": row[0],
+            "product_id": row[1],
+            "product_title": row[2],
+            "product_image": row[3],
+            "customer_name": row[4],
+            "customer_email": row[5],
+            "customer_phone": row[6],
+            "message": row[7],
+            "status": row[8],
+            "created_at": row[9].isoformat() if row[9] else None
+        } for row in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.get("/quotes/stats")
+async def get_quotes_stats():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        stats = {}
+        
+        cursor.execute("SELECT COUNT(*) FROM Quotes")
+        stats["total"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM Quotes WHERE status = 'pending'")
+        stats["pending"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM Quotes WHERE status = 'contacted'")
+        stats["contacted"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM Quotes WHERE status = 'converted'")
+        stats["converted"] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM Quotes WHERE status = 'closed'")
+        stats["closed"] = cursor.fetchone()[0]
+        
+        return stats
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/quotes/{quote_id}/status")
+async def update_quote_status(quote_id: int, data: QuoteStatusUpdate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        valid_statuses = ["pending", "contacted", "converted", "closed"]
+        if data.status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Status inválido. Use: {', '.join(valid_statuses)}")
+        
+        cursor.execute("UPDATE Quotes SET status = %s WHERE id = %s", (data.status, quote_id))
+        conn.commit()
+        
+        return {"message": "Status atualizado com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/quotes/{quote_id}")
+async def delete_quote(quote_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM Quotes WHERE id = %s", (quote_id,))
+        conn.commit()
+        return {"message": "Cotação excluída com sucesso"}
+    finally:
+        cursor.close()
+        conn.close()
