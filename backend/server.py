@@ -563,6 +563,7 @@ async def get_products(
             installment_price = r[3] / r[6] if r[6] else None
             images = json.loads(r[8]) if r[8] else [r[7]]
             specs = json.loads(r[20]) if r[20] else []
+            action_type = r[21] if r[21] else 'buy'
             
             products.append({
                 "id": r[0],
@@ -588,7 +589,9 @@ async def get_products(
                     "reputation": r[18],
                     "location": r[19]
                 },
-                "specs": specs
+                "specs": specs,
+                "actionType": action_type,
+                "whatsappNumber": r[22]
             })
         
         return products
