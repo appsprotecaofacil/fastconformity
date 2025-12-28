@@ -435,7 +435,14 @@ async def update_product(product_id: int, product: ProductUpdate):
             updates.append("whatsapp_number = %s")
             params.append(product.whatsapp_number if product.whatsapp_number else None)
         
-        if not updates:
+        # Always update display_overrides (can be null to reset to global)
+        updates.append("display_overrides = %s")
+        params.append(json.dumps(product.display_overrides) if product.display_overrides else None)
+        
+        if len(updates) == 1 and 'display_overrides' in updates[0]:
+            # Only display_overrides update is ok
+            pass
+        elif not updates:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
         
         params.append(product_id)
