@@ -341,4 +341,95 @@ export const adminHomeAPI = {
   }
 };
 
+// Footer Management API
+export const adminFooterAPI = {
+  // Settings
+  getSettings: async () => {
+    const response = await adminApi.get('/footer/settings');
+    return response.data;
+  },
+  updateSettings: async (data) => {
+    const response = await adminApi.put('/footer/settings', data);
+    return response.data;
+  },
+  
+  // Social Links
+  getSocialLinks: async () => {
+    const response = await adminApi.get('/footer/social-links');
+    return response.data;
+  },
+  createSocialLink: async (data) => {
+    const response = await adminApi.post('/footer/social-links', data);
+    return response.data;
+  },
+  updateSocialLink: async (id, data) => {
+    const response = await adminApi.put(`/footer/social-links/${id}`, data);
+    return response.data;
+  },
+  deleteSocialLink: async (id) => {
+    const response = await adminApi.delete(`/footer/social-links/${id}`);
+    return response.data;
+  },
+  
+  // Columns
+  getColumns: async () => {
+    const response = await adminApi.get('/footer/columns');
+    return response.data;
+  },
+  createColumn: async (data) => {
+    const response = await adminApi.post('/footer/columns', data);
+    return response.data;
+  },
+  updateColumn: async (id, data) => {
+    const response = await adminApi.put(`/footer/columns/${id}`, data);
+    return response.data;
+  },
+  deleteColumn: async (id) => {
+    const response = await adminApi.delete(`/footer/columns/${id}`);
+    return response.data;
+  },
+  
+  // Links
+  createLink: async (data) => {
+    const response = await adminApi.post('/footer/links', data);
+    return response.data;
+  },
+  updateLink: async (id, data) => {
+    const response = await adminApi.put(`/footer/links/${id}`, data);
+    return response.data;
+  },
+  deleteLink: async (id) => {
+    const response = await adminApi.delete(`/footer/links/${id}`);
+    return response.data;
+  },
+  
+  // Payment Methods
+  getPaymentMethods: async () => {
+    const response = await adminApi.get('/footer/payment-methods');
+    return response.data;
+  },
+  updatePaymentMethod: async (id, data) => {
+    const response = await adminApi.put(`/footer/payment-methods/${id}`, data);
+    return response.data;
+  },
+  
+  // Security Badges
+  getSecurityBadges: async () => {
+    const response = await adminApi.get('/footer/security-badges');
+    return response.data;
+  },
+  createSecurityBadge: async (data) => {
+    const response = await adminApi.post('/footer/security-badges', data);
+    return response.data;
+  },
+  updateSecurityBadge: async (id, data) => {
+    const response = await adminApi.put(`/footer/security-badges/${id}`, data);
+    return response.data;
+  },
+  deleteSecurityBadge: async (id) => {
+    const response = await adminApi.delete(`/footer/security-badges/${id}`);
+    return response.data;
+  }
+};
+
 export default adminApi;
