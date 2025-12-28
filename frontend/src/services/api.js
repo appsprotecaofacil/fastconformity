@@ -202,4 +202,12 @@ export const homeAPI = {
   }
 };
 
+// Footer API
+export const footerAPI = {
+  getData: async () => {
+    const response = await api.get('/footer');
+    return response.data;
+  }
+};
+
 export default api;
