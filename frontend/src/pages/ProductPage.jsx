@@ -505,6 +505,41 @@ const ProductPage = () => {
             )}
           </div>
         </div>
+
+        {/* Recommendation Sections (below reviews) */}
+        <div className="space-y-8 mt-8">
+          {/* Suggestions: Products you might like */}
+          {suggestions.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border">
+              <ProductCarousel 
+                title="Encontramos outros produtos que você pode gostar"
+                subtitle="Baseado no que você está vendo"
+                products={suggestions}
+              />
+            </div>
+          )}
+
+          {/* Also Viewed: Who viewed this also viewed */}
+          {alsoViewed.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border">
+              <ProductCarousel 
+                title="Quem viu isto também viu"
+                subtitle="Outros clientes também se interessaram por"
+                products={alsoViewed}
+              />
+            </div>
+          )}
+
+          {/* More Related Products */}
+          {relatedProducts.length > 4 && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border">
+              <ProductCarousel 
+                title="Mais produtos da categoria"
+                products={relatedProducts}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quote Modal */}
