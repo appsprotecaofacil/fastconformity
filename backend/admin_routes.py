@@ -1549,3 +1549,430 @@ async def update_product_display_overrides(product_id: int, overrides: Optional[
     finally:
         cursor.close()
         conn.close()
+
+
+# ==================== HOME MANAGEMENT ====================
+
+class HeroSlideCreate(BaseModel):
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    image_url: str
+    link_url: Optional[str] = None
+    link_text: Optional[str] = None
+    text_color: Optional[str] = '#FFFFFF'
+    overlay_opacity: Optional[int] = 40
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+class HomeSectionUpdate(BaseModel):
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    config: Optional[dict] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class ProductCarouselCreate(BaseModel):
+    title: str
+    subtitle: Optional[str] = None
+    selection_type: Optional[str] = 'manual'
+    selection_rule: Optional[dict] = None
+    product_ids: Optional[List[int]] = None
+    max_products: Optional[int] = 12
+    is_active: Optional[bool] = True
+
+class PromoBannerCreate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    image_url: str
+    link_url: Optional[str] = None
+    badge_text: Optional[str] = None
+    layout_type: Optional[str] = 'full'
+    background_color: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    is_active: Optional[bool] = True
+
+class ContentBlockCreate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    layout_type: Optional[str] = 'full'
+    background_color: Optional[str] = None
+    text_align: Optional[str] = 'center'
+    is_active: Optional[bool] = True
+
+# Home Sections
+@admin_router.get("/home/sections")
+async def get_home_sections():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, section_type, title, subtitle, config, sort_order, is_active
+            FROM HomeSections ORDER BY sort_order
+        """)
+        sections = []
+        for row in cursor.fetchall():
+            sections.append({
+                "id": row[0], "type": row[1], "title": row[2], "subtitle": row[3],
+                "config": json.loads(row[4]) if row[4] else {},
+                "sortOrder": row[5], "isActive": bool(row[6])
+            })
+        return sections
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/sections/{section_id}")
+async def update_home_section(section_id: int, data: HomeSectionUpdate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        updates = []
+        params = []
+        if data.title is not None:
+            updates.append("title = %s")
+            params.append(data.title)
+        if data.subtitle is not None:
+            updates.append("subtitle = %s")
+            params.append(data.subtitle)
+        if data.config is not None:
+            updates.append("config = %s")
+            params.append(json.dumps(data.config))
+        if data.sort_order is not None:
+            updates.append("sort_order = %s")
+            params.append(data.sort_order)
+        if data.is_active is not None:
+            updates.append("is_active = %s")
+            params.append(1 if data.is_active else 0)
+        
+        if updates:
+            params.append(section_id)
+            cursor.execute(f"UPDATE HomeSections SET {', '.join(updates)} WHERE id = %s", params)
+            conn.commit()
+        return {"message": "Seção atualizada"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/sections/reorder")
+async def reorder_home_sections(order: List[int]):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        for idx, section_id in enumerate(order):
+            cursor.execute("UPDATE HomeSections SET sort_order = %s WHERE id = %s", (idx + 1, section_id))
+        conn.commit()
+        return {"message": "Ordem atualizada"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Hero Slides
+@admin_router.get("/home/hero-slides")
+async def get_hero_slides():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, title, subtitle, image_url, link_url, link_text, text_color, overlay_opacity, sort_order, is_active
+            FROM HeroSlides ORDER BY sort_order
+        """)
+        slides = []
+        for row in cursor.fetchall():
+            slides.append({
+                "id": row[0], "title": row[1], "subtitle": row[2], "imageUrl": row[3],
+                "linkUrl": row[4], "linkText": row[5], "textColor": row[6],
+                "overlayOpacity": row[7], "sortOrder": row[8], "isActive": bool(row[9])
+            })
+        return slides
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/home/hero-slides")
+async def create_hero_slide(data: HeroSlideCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO HeroSlides (title, subtitle, image_url, link_url, link_text, text_color, overlay_opacity, sort_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (data.title, data.subtitle, data.image_url, data.link_url, data.link_text, 
+              data.text_color, data.overlay_opacity, data.sort_order, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        return {"message": "Slide criado", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/hero-slides/{slide_id}")
+async def update_hero_slide(slide_id: int, data: HeroSlideCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE HeroSlides SET title=%s, subtitle=%s, image_url=%s, link_url=%s, link_text=%s,
+            text_color=%s, overlay_opacity=%s, sort_order=%s, is_active=%s WHERE id=%s
+        """, (data.title, data.subtitle, data.image_url, data.link_url, data.link_text,
+              data.text_color, data.overlay_opacity, data.sort_order, 1 if data.is_active else 0, slide_id))
+        conn.commit()
+        return {"message": "Slide atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/home/hero-slides/{slide_id}")
+async def delete_hero_slide(slide_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM HeroSlides WHERE id = %s", (slide_id,))
+        conn.commit()
+        return {"message": "Slide removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Product Carousels
+@admin_router.get("/home/carousels")
+async def get_product_carousels():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, title, subtitle, selection_type, selection_rule, product_ids, max_products, sort_order, is_active
+            FROM ProductCarousels ORDER BY sort_order
+        """)
+        carousels = []
+        for row in cursor.fetchall():
+            carousels.append({
+                "id": row[0], "title": row[1], "subtitle": row[2], "selectionType": row[3],
+                "selectionRule": json.loads(row[4]) if row[4] else None,
+                "productIds": json.loads(row[5]) if row[5] else [],
+                "maxProducts": row[6], "sortOrder": row[7], "isActive": bool(row[8])
+            })
+        return carousels
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/home/carousels")
+async def create_product_carousel(data: ProductCarouselCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO ProductCarousels (title, subtitle, selection_type, selection_rule, product_ids, max_products, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (data.title, data.subtitle, data.selection_type,
+              json.dumps(data.selection_rule) if data.selection_rule else None,
+              json.dumps(data.product_ids) if data.product_ids else None,
+              data.max_products, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        return {"message": "Carrossel criado", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/carousels/{carousel_id}")
+async def update_product_carousel(carousel_id: int, data: ProductCarouselCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE ProductCarousels SET title=%s, subtitle=%s, selection_type=%s, selection_rule=%s,
+            product_ids=%s, max_products=%s, is_active=%s WHERE id=%s
+        """, (data.title, data.subtitle, data.selection_type,
+              json.dumps(data.selection_rule) if data.selection_rule else None,
+              json.dumps(data.product_ids) if data.product_ids else None,
+              data.max_products, 1 if data.is_active else 0, carousel_id))
+        conn.commit()
+        return {"message": "Carrossel atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/home/carousels/{carousel_id}")
+async def delete_product_carousel(carousel_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM ProductCarousels WHERE id = %s", (carousel_id,))
+        conn.commit()
+        return {"message": "Carrossel removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Promo Banners
+@admin_router.get("/home/banners")
+async def get_promo_banners():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, title, description, image_url, link_url, badge_text, layout_type, 
+                   background_color, start_date, end_date, sort_order, is_active
+            FROM PromoBanners ORDER BY sort_order
+        """)
+        banners = []
+        for row in cursor.fetchall():
+            banners.append({
+                "id": row[0], "title": row[1], "description": row[2], "imageUrl": row[3],
+                "linkUrl": row[4], "badgeText": row[5], "layoutType": row[6],
+                "backgroundColor": row[7], 
+                "startDate": row[8].isoformat() if row[8] else None,
+                "endDate": row[9].isoformat() if row[9] else None,
+                "sortOrder": row[10], "isActive": bool(row[11])
+            })
+        return banners
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/home/banners")
+async def create_promo_banner(data: PromoBannerCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO PromoBanners (title, description, image_url, link_url, badge_text, layout_type, background_color, start_date, end_date, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (data.title, data.description, data.image_url, data.link_url, data.badge_text,
+              data.layout_type, data.background_color, data.start_date, data.end_date, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        return {"message": "Banner criado", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/banners/{banner_id}")
+async def update_promo_banner(banner_id: int, data: PromoBannerCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE PromoBanners SET title=%s, description=%s, image_url=%s, link_url=%s, badge_text=%s,
+            layout_type=%s, background_color=%s, start_date=%s, end_date=%s, is_active=%s WHERE id=%s
+        """, (data.title, data.description, data.image_url, data.link_url, data.badge_text,
+              data.layout_type, data.background_color, data.start_date, data.end_date, 1 if data.is_active else 0, banner_id))
+        conn.commit()
+        return {"message": "Banner atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/home/banners/{banner_id}")
+async def delete_promo_banner(banner_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM PromoBanners WHERE id = %s", (banner_id,))
+        conn.commit()
+        return {"message": "Banner removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Content Blocks
+@admin_router.get("/home/content-blocks")
+async def get_content_blocks():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, title, content, layout_type, background_color, text_align, sort_order, is_active
+            FROM ContentBlocks ORDER BY sort_order
+        """)
+        blocks = []
+        for row in cursor.fetchall():
+            blocks.append({
+                "id": row[0], "title": row[1], "content": row[2], "layoutType": row[3],
+                "backgroundColor": row[4], "textAlign": row[5], "sortOrder": row[6], "isActive": bool(row[7])
+            })
+        return blocks
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.post("/home/content-blocks")
+async def create_content_block(data: ContentBlockCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO ContentBlocks (title, content, layout_type, background_color, text_align, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (data.title, data.content, data.layout_type, data.background_color, data.text_align, 1 if data.is_active else 0))
+        conn.commit()
+        cursor.execute("SELECT SCOPE_IDENTITY()")
+        new_id = cursor.fetchone()[0]
+        return {"message": "Bloco criado", "id": new_id}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/content-blocks/{block_id}")
+async def update_content_block(block_id: int, data: ContentBlockCreate):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE ContentBlocks SET title=%s, content=%s, layout_type=%s, background_color=%s, text_align=%s, is_active=%s WHERE id=%s
+        """, (data.title, data.content, data.layout_type, data.background_color, data.text_align, 1 if data.is_active else 0, block_id))
+        conn.commit()
+        return {"message": "Bloco atualizado"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.delete("/home/content-blocks/{block_id}")
+async def delete_content_block(block_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM ContentBlocks WHERE id = %s", (block_id,))
+        conn.commit()
+        return {"message": "Bloco removido"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Home Settings
+@admin_router.get("/home/settings")
+async def get_home_settings():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT setting_key, setting_value FROM HomeSettings")
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = row[1]
+        return settings
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_router.put("/home/settings")
+async def update_home_settings(settings: dict):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        for key, value in settings.items():
+            cursor.execute("""
+                IF EXISTS (SELECT 1 FROM HomeSettings WHERE setting_key = %s)
+                    UPDATE HomeSettings SET setting_value = %s, updated_at = GETDATE() WHERE setting_key = %s
+                ELSE
+                    INSERT INTO HomeSettings (setting_key, setting_value) VALUES (%s, %s)
+            """, (key, str(value), key, key, str(value)))
+        conn.commit()
+        return {"message": "Configurações atualizadas"}
+    finally:
+        cursor.close()
+        conn.close()
