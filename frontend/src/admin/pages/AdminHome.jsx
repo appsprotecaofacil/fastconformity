@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Home, GripVertical, Eye, EyeOff, Edit2, Trash2, Plus, Save, 
   Image, Type, ShoppingBag, Layout, Mail, ChevronDown, ChevronUp,
-  Sliders, Award, RefreshCw
+  Sliders, Award, RefreshCw, Settings, X, Search, Check
 } from 'lucide-react';
-import { adminHomeAPI } from '../../services/adminApi';
+import { adminHomeAPI, adminCategoriesAPI, adminProductsAPI } from '../../services/adminApi';
 
 const sectionIcons = {
   hero: Image,
@@ -19,12 +19,15 @@ const sectionIcons = {
 const sectionLabels = {
   hero: 'Banner Principal',
   benefits: 'Benefícios',
-  categories: 'Categorias',
+  categories: 'Categorias em Destaque',
   carousel: 'Carrossel de Produtos',
   promo_banners: 'Banners Promocionais',
   newsletter: 'Newsletter',
   content: 'Conteúdo',
 };
+
+// Benefits icons available
+const benefitIcons = ['Truck', 'ShieldCheck', 'CreditCard', 'Clock', 'Award', 'Heart', 'Star', 'Gift', 'Percent', 'Headphones'];
 
 const AdminHome = () => {
   const [sections, setSections] = useState([]);
@@ -32,27 +35,35 @@ const AdminHome = () => {
   const [carousels, setCarousels] = useState([]);
   const [banners, setBanners] = useState([]);
   const [settings, setSettings] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('layout');
   const [expandedSection, setExpandedSection] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [editingSection, setEditingSection] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [productSearch, setProductSearch] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
-      const [sectionsData, slidesData, carouselsData, bannersData, settingsData] = await Promise.all([
+      const [sectionsData, slidesData, carouselsData, bannersData, settingsData, categoriesData, productsData] = await Promise.all([
         adminHomeAPI.getSections(),
         adminHomeAPI.getHeroSlides(),
         adminHomeAPI.getCarousels(),
         adminHomeAPI.getBanners(),
-        adminHomeAPI.getSettings()
+        adminHomeAPI.getSettings(),
+        adminCategoriesAPI.getAll(),
+        adminProductsAPI.getAll()
       ]);
       setSections(sectionsData);
       setHeroSlides(slidesData);
       setCarousels(carouselsData);
       setBanners(bannersData);
       setSettings(settingsData);
+      setCategories(categoriesData);
+      setProducts(productsData.slice(0, 100)); // Limit for performance
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
@@ -100,6 +111,26 @@ const AdminHome = () => {
       ));
     } catch (error) {
       console.error('Error toggling section:', error);
+    }
+  };
+
+  const handleSaveSectionConfig = async (section, config) => {
+    setSaving(true);
+    try {
+      await adminHomeAPI.updateSection(section.id, { 
+        title: section.title,
+        subtitle: section.subtitle,
+        config: config 
+      });
+      setSections(sections.map(s => 
+        s.id === section.id ? { ...s, config: config } : s
+      ));
+      setEditingSection(null);
+      alert('Configuração salva!');
+    } catch (error) {
+      alert('Erro ao salvar configuração');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -184,10 +215,274 @@ const AdminHome = () => {
     }
   };
 
+  // Render section configuration panel
+  const renderSectionConfig = (section) => {
+    const config = section.config || {};
+
+    switch (section.type) {
+      case 'categories':
+        const selectedCategories = config.selectedCategories || [];
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Selecione as categorias que deseja exibir:</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
+              {categories.map(cat => (
+                <label 
+                  key={cat.id} 
+                  className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedCategories.includes(cat.id) 
+                      ? 'border-purple-500 bg-purple-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat.id)}
+                    onChange={(e) => {
+                      const newSelected = e.target.checked
+                        ? [...selectedCategories, cat.id]
+                        : selectedCategories.filter(id => id !== cat.id);
+                      setEditingSection({
+                        ...editingSection,
+                        config: { ...config, selectedCategories: newSelected }
+                      });
+                    }}
+                    className="rounded text-purple-600"
+                  />
+                  <span className="text-sm">{cat.name}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 pt-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Máximo de categorias</label>
+                <input
+                  type="number"
+                  value={config.maxItems || 12}
+                  onChange={(e) => setEditingSection({
+                    ...editingSection,
+                    config: { ...config, maxItems: parseInt(e.target.value) || 12 }
+                  })}
+                  className="w-24 px-3 py-2 border rounded-lg"
+                  min="1"
+                  max="20"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'benefits':
+        const benefits = config.items || [
+          { icon: 'Truck', title: 'Entrega Rápida', subtitle: 'Em até 24h' },
+          { icon: 'ShieldCheck', title: 'Compra Segura', subtitle: '100% protegida' },
+          { icon: 'CreditCard', title: 'Parcele em 12x', subtitle: 'Sem juros' },
+        ];
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Configure os benefícios exibidos:</p>
+            <div className="space-y-3">
+              {benefits.map((benefit, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <select
+                    value={benefit.icon}
+                    onChange={(e) => {
+                      const newBenefits = [...benefits];
+                      newBenefits[idx] = { ...benefit, icon: e.target.value };
+                      setEditingSection({
+                        ...editingSection,
+                        config: { ...config, items: newBenefits }
+                      });
+                    }}
+                    className="px-2 py-1 border rounded text-sm"
+                  >
+                    {benefitIcons.map(icon => (
+                      <option key={icon} value={icon}>{icon}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={benefit.title}
+                    onChange={(e) => {
+                      const newBenefits = [...benefits];
+                      newBenefits[idx] = { ...benefit, title: e.target.value };
+                      setEditingSection({
+                        ...editingSection,
+                        config: { ...config, items: newBenefits }
+                      });
+                    }}
+                    className="flex-1 px-3 py-1 border rounded text-sm"
+                    placeholder="Título"
+                  />
+                  <input
+                    type="text"
+                    value={benefit.subtitle}
+                    onChange={(e) => {
+                      const newBenefits = [...benefits];
+                      newBenefits[idx] = { ...benefit, subtitle: e.target.value };
+                      setEditingSection({
+                        ...editingSection,
+                        config: { ...config, items: newBenefits }
+                      });
+                    }}
+                    className="flex-1 px-3 py-1 border rounded text-sm"
+                    placeholder="Subtítulo"
+                  />
+                  <button
+                    onClick={() => {
+                      const newBenefits = benefits.filter((_, i) => i !== idx);
+                      setEditingSection({
+                        ...editingSection,
+                        config: { ...config, items: newBenefits }
+                      });
+                    }}
+                    className="p-1 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                const newBenefits = [...benefits, { icon: 'Star', title: 'Novo Benefício', subtitle: 'Descrição' }];
+                setEditingSection({
+                  ...editingSection,
+                  config: { ...config, items: newBenefits }
+                });
+              }}
+              className="flex items-center gap-2 text-sm text-purple-600 hover:underline"
+            >
+              <Plus size={16} />
+              Adicionar benefício
+            </button>
+          </div>
+        );
+
+      case 'carousel':
+        const carouselId = config.carouselId;
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Selecione o carrossel de produtos:</p>
+            <div className="space-y-2">
+              {carousels.map(carousel => (
+                <label 
+                  key={carousel.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    carouselId === carousel.id 
+                      ? 'border-purple-500 bg-purple-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="carousel"
+                    checked={carouselId === carousel.id}
+                    onChange={() => setEditingSection({
+                      ...editingSection,
+                      config: { ...config, carouselId: carousel.id }
+                    })}
+                    className="text-purple-600"
+                  />
+                  <div>
+                    <p className="font-medium">{carousel.title}</p>
+                    <p className="text-xs text-gray-500">
+                      {carousel.selectionType === 'manual' ? 'Seleção manual' : 'Automático'} • 
+                      Máx: {carousel.maxProducts} produtos
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500">
+              Gerencie os carrosséis na aba "Carrosséis" acima.
+            </p>
+          </div>
+        );
+
+      case 'newsletter':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Configure a seção de newsletter:</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Texto do botão</label>
+              <input
+                type="text"
+                value={config.buttonText || 'Inscrever-se'}
+                onChange={(e) => setEditingSection({
+                  ...editingSection,
+                  config: { ...config, buttonText: e.target.value }
+                })}
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Placeholder do campo</label>
+              <input
+                type="text"
+                value={config.placeholder || 'Digite seu e-mail'}
+                onChange={(e) => setEditingSection({
+                  ...editingSection,
+                  config: { ...config, placeholder: e.target.value }
+                })}
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+            </div>
+          </div>
+        );
+
+      case 'promo_banners':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Configure o layout dos banners:</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Layout</label>
+              <select
+                value={config.layout || 'grid-2'}
+                onChange={(e) => setEditingSection({
+                  ...editingSection,
+                  config: { ...config, layout: e.target.value }
+                })}
+                className="w-full px-3 py-2 border rounded-lg"
+              >
+                <option value="grid-2">2 colunas</option>
+                <option value="grid-3">3 colunas</option>
+                <option value="full">Largura total</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Máximo de banners</label>
+              <input
+                type="number"
+                value={config.maxBanners || 2}
+                onChange={(e) => setEditingSection({
+                  ...editingSection,
+                  config: { ...config, maxBanners: parseInt(e.target.value) || 2 }
+                })}
+                className="w-24 px-3 py-2 border rounded-lg"
+                min="1"
+                max="6"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Gerencie os banners na aba "Banners" acima.
+            </p>
+          </div>
+        );
+
+      default:
+        return (
+          <p className="text-sm text-gray-500">
+            Esta seção não possui configurações adicionais.
+          </p>
+        );
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
   }
@@ -243,9 +538,9 @@ const AdminHome = () => {
       {/* Layout Tab - Drag & Drop Sections */}
       {activeTab === 'layout' && (
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-            <p className="text-sm text-blue-700">
-              <strong>Dica:</strong> Arraste as seções para reordenar. Clique no olho para ativar/desativar.
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+            <p className="text-sm text-purple-700">
+              <strong>Dica:</strong> Arraste para reordenar. Clique no <Settings className="inline" size={14} /> para configurar cada seção.
             </p>
           </div>
           
@@ -276,6 +571,13 @@ const AdminHome = () => {
                     <p className="text-xs text-gray-500">{sectionLabels[section.type]}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingSection(section)}
+                      className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Configurar seção"
+                    >
+                      <Settings size={18} />
+                    </button>
                     <button
                       onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -416,7 +718,7 @@ const AdminHome = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">Carrosséis de Produtos</h2>
             <button
-              onClick={() => setEditingItem({ type: 'carousel', data: { title: '', subtitle: '', selection_type: 'rule', selection_rule: { orderBy: 'rating', order: 'desc' }, max_products: 12, is_active: true } })}
+              onClick={() => setEditingItem({ type: 'carousel', data: { title: '', subtitle: '', selection_type: 'rule', selection_rule: { orderBy: 'rating', order: 'desc' }, product_ids: [], max_products: 12, is_active: true } })}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <Plus size={18} />
@@ -446,7 +748,7 @@ const AdminHome = () => {
                       onClick={() => setEditingItem({ type: 'carousel', data: {
                         id: carousel.id, title: carousel.title, subtitle: carousel.subtitle,
                         selection_type: carousel.selectionType, selection_rule: carousel.selectionRule,
-                        product_ids: carousel.productIds, max_products: carousel.maxProducts, is_active: carousel.isActive
+                        product_ids: carousel.productIds || [], max_products: carousel.maxProducts, is_active: carousel.isActive
                       }})}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     >
@@ -611,7 +913,42 @@ const AdminHome = () => {
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Section Config Modal */}
+      {editingSection && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">
+                Configurar: {editingSection.title || sectionLabels[editingSection.type]}
+              </h2>
+              <button onClick={() => setEditingSection(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              {renderSectionConfig(editingSection)}
+            </div>
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingSection(null)}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleSaveSectionConfig(editingSection, editingSection.config)}
+                disabled={saving}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+                Salvar Configuração
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Modal */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -719,9 +1056,10 @@ const AdminHome = () => {
                       className="w-full px-3 py-2 border rounded-lg"
                     >
                       <option value="rule">Automático (por regra)</option>
-                      <option value="manual">Manual (IDs específicos)</option>
+                      <option value="manual">Manual (selecionar produtos)</option>
                     </select>
                   </div>
+                  
                   {editingItem.data.selection_type === 'rule' && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -738,17 +1076,66 @@ const AdminHome = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Desconto mínimo (%)</label>
-                        <input
-                          type="number"
-                          value={editingItem.data.selection_rule?.minDiscount || ''}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, selection_rule: { ...editingItem.data.selection_rule, minDiscount: parseInt(e.target.value) || null } } })}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria (opcional)</label>
+                        <select
+                          value={editingItem.data.selection_rule?.categoryId || ''}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, selection_rule: { ...editingItem.data.selection_rule, categoryId: e.target.value ? parseInt(e.target.value) : null } } })}
                           className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="0"
-                        />
+                        >
+                          <option value="">Todas</option>
+                          {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   )}
+
+                  {editingItem.data.selection_type === 'manual' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Selecionar Produtos</label>
+                      <div className="relative mb-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="text"
+                          value={productSearch}
+                          onChange={(e) => setProductSearch(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border rounded-lg"
+                          placeholder="Buscar produto..."
+                        />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto border rounded-lg">
+                        {products
+                          .filter(p => p.title.toLowerCase().includes(productSearch.toLowerCase()))
+                          .slice(0, 20)
+                          .map(product => (
+                            <label 
+                              key={product.id}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(editingItem.data.product_ids || []).includes(product.id)}
+                                onChange={(e) => {
+                                  const currentIds = editingItem.data.product_ids || [];
+                                  const newIds = e.target.checked
+                                    ? [...currentIds, product.id]
+                                    : currentIds.filter(id => id !== product.id);
+                                  setEditingItem({ ...editingItem, data: { ...editingItem.data, product_ids: newIds } });
+                                }}
+                                className="rounded"
+                              />
+                              <img src={product.image} alt="" className="w-8 h-8 object-contain" />
+                              <span className="text-sm truncate">{product.title}</span>
+                            </label>
+                          ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(editingItem.data.product_ids || []).length} produtos selecionados
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Máx. Produtos</label>
                     <input
@@ -821,18 +1208,6 @@ const AdminHome = () => {
                         placeholder="NOVO, PROMOÇÃO..."
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-                    <select
-                      value={editingItem.data.layout_type}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, layout_type: e.target.value } })}
-                      className="w-full px-3 py-2 border rounded-lg"
-                    >
-                      <option value="full">Largura total</option>
-                      <option value="half">Meia largura</option>
-                      <option value="third">Um terço</option>
-                    </select>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
