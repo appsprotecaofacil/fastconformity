@@ -9,7 +9,7 @@ const colors = {
   accent: '#FF6B35',
 };
 
-const CategoryGrid = () => {
+const CategoryGrid = ({ showTitle = true, title, subtitle }) => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -36,9 +36,16 @@ const CategoryGrid = () => {
   return (
     <div className="bg-white py-10">
       <div className="max-w-[1200px] mx-auto px-4">
-        <h2 className="text-2xl font-bold mb-8" style={{ color: colors.primary }}>
-          Categorias em Destaque
-        </h2>
+        {showTitle && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>
+              {title || 'Categorias em Destaque'}
+            </h2>
+            {subtitle && (
+              <p className="text-gray-500 mt-1">{subtitle}</p>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {categories.slice(0, 12).map((category) => (
             <Link
