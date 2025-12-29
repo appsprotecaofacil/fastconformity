@@ -343,19 +343,12 @@ const HomePage = () => {
       
       case 'categories':
         return (
-          <div key={section.id}>
-            {(section.title || section.subtitle) && (
-              <div className="max-w-[1200px] mx-auto px-4 pt-8">
-                {section.title && (
-                  <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>{section.title}</h2>
-                )}
-                {section.subtitle && (
-                  <p className="text-gray-500 mt-1">{section.subtitle}</p>
-                )}
-              </div>
-            )}
-            <CategoryGrid />
-          </div>
+          <CategoryGrid 
+            key={section.id} 
+            showTitle={true}
+            title={section.title || 'Categorias em Destaque'}
+            subtitle={section.subtitle}
+          />
         );
       
       case 'carousel':
