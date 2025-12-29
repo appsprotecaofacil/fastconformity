@@ -9,7 +9,7 @@ const colors = {
   accent: '#FF6B35',
 };
 
-const CategoryGrid = ({ showTitle = true, title, subtitle }) => {
+const CategoryGrid = ({ showTitle = true, title, subtitle, selectedCategories = [], maxItems = 12 }) => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -33,6 +33,17 @@ const CategoryGrid = ({ showTitle = true, title, subtitle }) => {
     return null;
   }
 
+  // Filter categories if selectedCategories is provided
+  let displayCategories = categories;
+  if (selectedCategories && selectedCategories.length > 0) {
+    displayCategories = categories.filter(cat => selectedCategories.includes(cat.id));
+    // Sort by the order in selectedCategories
+    displayCategories.sort((a, b) => selectedCategories.indexOf(a.id) - selectedCategories.indexOf(b.id));
+  }
+  
+  // Limit to maxItems
+  displayCategories = displayCategories.slice(0, maxItems);
+
   return (
     <div className="bg-white py-10">
       <div className="max-w-[1200px] mx-auto px-4">
@@ -47,7 +58,7 @@ const CategoryGrid = ({ showTitle = true, title, subtitle }) => {
           </div>
         )}
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {categories.slice(0, 12).map((category) => (
+          {displayCategories.map((category) => (
             <Link
               key={category.id}
               to={`/search?category=${category.slug}`}
